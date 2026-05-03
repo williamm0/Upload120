@@ -4,6 +4,8 @@
 
 Upload120 rewrites two metadata fields inside an MP4 (`mvhd` and `mdhd`) so TikTok's upload pipeline sees the video as standard-rate footage. Your real frames pass through untouched, but the platform preserves the full 60/120 fps for playback — and the compression path is significantly softer, meaning noticeably sharper video too.
 
+<img width="2500" height="1080" alt="Upload120" src="https://github.com/user-attachments/assets/8d6181ee-750e-442f-8dba-2c2350df3cfc" />
+
 ---
 
 ## Features
@@ -45,12 +47,14 @@ TikTok reads the rewritten headers and treats the file as 30 fps footage. Becaus
 
 ## Installation
 
+https://github.com/user-attachments/assets/3ab280cd-3fd2-4e6b-98fa-f0cae628a9c4
+
 ### macOS
 
 Download the latest `.dmg` or `.pkg` from [Releases](../../releases) and open it.
 
 - **DMG** — drag Upload120 to your Applications folder.
-- **PKG** — double-click and follow the installer.
+- **PKG** — double-click and follow the installer. **Best alternative**
 
 > macOS will warn about an unnotarised app. Right-click the app and choose **Open** to proceed.
 

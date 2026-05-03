@@ -565,7 +565,19 @@ let waitingForLoginPopup = false;
 
 ipcMain.handle('tiktok:openLogin', async () => {
   waitingForLoginPopup = true;
-  ensureTikTokWindow({ url: TIKTOK_LOGIN, show: false });
+  const win = ensureTikTokWindow({ url: TIKTOK_LOGIN, show: true });
+
+  // Auto-hide the window once TikTok redirects away from the login page
+  const onNavigate = async (_e, url) => {
+    if (!url.includes('/login') && url.includes('tiktok.com')) {
+      win.webContents.removeListener('did-navigate', onNavigate);
+      if (win && !win.isDestroyed()) win.hide();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('tiktok:event', { stage: 'login-detected' });
+      }
+    }
+  };
+  win.webContents.on('did-navigate', onNavigate);
   return { ok: true };
 });
 

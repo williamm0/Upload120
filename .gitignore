@@ -1,3 +1,39 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+out/
+
+# Electron builder cache
+.cache/
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+
+# Temporary
+*.tmp
+*.temp

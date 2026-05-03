@@ -878,6 +878,7 @@ els.uploadBtn.addEventListener('click', async () => {
 
 // TikTok event stream from main
 const stageMap = {
+  'login-detected':     { msg: 'Logged in  -  session saved.',    pct: 0, kind: 'success' },
   'opening':            { msg: 'Opening TikTok…',                pct: 8 },
   'page-loaded':        { msg: 'Page loaded.',                   pct: 18 },
   'needs-login':        { msg: 'TikTok session needs another check.', pct: 0,  kind: 'error' },
@@ -898,6 +899,11 @@ const stageMap = {
 
 window.api.onTikTokEvent((ev) => {
   if (!ev || !ev.stage) return;
+  if (ev.stage === 'login-detected') {
+    refreshTikTokStatus();
+    showToast('Signed in to TikTok ✓', 'success');
+    return;
+  }
   const m = stageMap[ev.stage];
   if (!m) return;
   setProgress(m.pct, m.msg);

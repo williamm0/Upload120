@@ -22,7 +22,6 @@
     "appId": "com.upload120.app",
     "productName": "Upload120",
     "copyright": "Copyright © 2026 jx",
-    "afterPack": "scripts/afterPack.js",
     "files": [
       "main.js",
       "preload.js",

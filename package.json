@@ -1,0 +1,101 @@
+{
+  "name": "upload120",
+  "version": "1.1.0",
+  "description": "Upload120  -  Patch MP4 videos for high-FPS TikTok uploads, with a built-in post composer.",
+  "main": "main.js",
+  "author": "jx <https://jxffx.com>",
+  "homepage": "https://jxffx.com",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --enable-logging",
+    "pack:mac": "electron-builder --mac --arm64 --dir",
+    "build:mac": "electron-builder --mac --arm64",
+    "build:win": "electron-builder --win --x64",
+    "build:all": "electron-builder --mac --arm64 --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.upload120.app",
+    "productName": "Upload120",
+    "copyright": "Copyright © 2026 jx",
+    "afterPack": "scripts/afterPack.js",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "assets/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.video",
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "pkg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "darkModeSupport": true,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "identity": null,
+      "artifactName": "Upload120-${version}-${arch}.${ext}"
+    },
+    "afterPack": "./scripts/afterPack.js",
+    "pkg": {
+      "installLocation": "/Applications",
+      "allowAnywhere": true,
+      "allowCurrentUserHome": true,
+      "allowRootDirectory": true
+    },
+    "win": {
+      "icon": "assets/icon.icns",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Upload120-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Upload120"
+    },
+    "portable": {
+      "artifactName": "Upload120-${version}-portable.exe"
+    },
+    "directories": {
+      "output": "dist"
+    }
+  }
+}

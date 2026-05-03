@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+/usr/bin/open -b com.upload120.app >/dev/null 2>&1 || true
+exit 0

@@ -20,7 +20,7 @@
   let nextId = 1;
 
   function formatBytes(bytes) {
-    if (!Number.isFinite(bytes)) return '—';
+    if (!Number.isFinite(bytes)) return '-';
     const units = ['B', 'KB', 'MB', 'GB'];
     let value = bytes;
     let unit = 0;
@@ -44,8 +44,8 @@
 
   function modeLabel(item) {
     if (item.mode === 'auto') return 'Auto';
-    if (item.mode === 'custom') return `${item.multiplier}× custom`;
-    return `${item.multiplier}×`;
+    if (item.mode === 'custom') return `${item.multiplier}x custom`;
+    return `${item.multiplier}x`;
   }
 
   function effectiveFps(item) {
@@ -67,22 +67,22 @@
     processBtn.disabled = queue.length === 0 || queue.every(item => item.status === 'done' || item.status === 'error');
 
     if (queue.length === 0) {
-      queueEl.innerHTML = '<div class="queue-empty">No files yet — drop a video above.</div>';
+      queueEl.innerHTML = '<div class="queue-empty">No files yet. Drop a video above.</div>';
       return;
     }
 
     queueEl.innerHTML = queue.map(item => {
       const info = item.info || {};
-      const resolution = info.width && info.height ? `${info.width}×${info.height}` : 'Unknown';
+      const resolution = info.width && info.height ? `${info.width} x ${info.height}` : 'Unknown';
       const statusClass = item.status === 'done' ? 'done' : item.status === 'error' ? 'error' : '';
       const download = item.url
         ? `<a class="download-btn" href="${item.url}" download="${item.outputName}">Download</a>`
-        : '<span class="metric-value">—</span>';
+        : '<span class="metric-value">-</span>';
       return `
         <div class="queue-row" data-id="${item.id}">
           <div>
             <div class="file-name">${escapeHtml(item.file.name)}</div>
-            <div class="file-sub">${formatBytes(item.file.size)} · ${escapeHtml(item.file.type || 'video file')}</div>
+            <div class="file-sub">${formatBytes(item.file.size)} / ${escapeHtml(item.file.type || 'video file')}</div>
           </div>
           <div><div class="metric-label">Detected FPS</div><div class="metric-value">${formatFps(info.fps)}</div></div>
           <div><div class="metric-label">Resolution</div><div class="metric-value">${resolution}</div></div>
@@ -149,7 +149,7 @@
         item.outputName = outputName(item.file.name);
         item.url = URL.createObjectURL(blob);
         item.status = 'done';
-        item.message = `Done · mvhd ${result.mvhdCount}, mdhd ${result.mdhdCount}`;
+        item.message = `Done / mvhd ${result.mvhdCount}, mdhd ${result.mdhdCount}`;
         if (autoDownloadInput.checked) triggerDownload(item);
       } catch (error) {
         item.status = 'error';
@@ -209,14 +209,14 @@
     });
     if (selectedMode === 'custom') customMultiplier.focus();
     const multiplier = getMultiplier();
-    modeHint.textContent = selectedMode === 'auto' ? 'Auto preserves detected FPS' : `Output/effective FPS = detected FPS × ${multiplier}`;
+    modeHint.textContent = selectedMode === 'auto' ? 'Auto preserves detected FPS' : `Output/effective FPS = detected FPS x ${multiplier}`;
   });
 
   customMultiplier.addEventListener('input', () => {
     selectedMode = 'custom';
     const card = document.querySelector('.custom-card');
     document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('active', el === card));
-    modeHint.textContent = `Output/effective FPS = detected FPS × ${getMultiplier()}`;
+    modeHint.textContent = `Output/effective FPS = detected FPS x ${getMultiplier()}`;
   });
 
   const observer = new IntersectionObserver(entries => {

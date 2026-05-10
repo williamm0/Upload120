@@ -56,23 +56,23 @@
           <div class="panel-head">
             <div>
               <p class="label">Multiplier</p>
-              <h3 id="multiplierTitle">Choose the effective playback timing.</h3>
+              <h3 id="multiplierTitle">Choose the same timing patch used by the app.</h3>
             </div>
-            <span class="hint" id="modeHint">Auto preserves detected FPS</span>
+            <span class="hint" id="modeHint">4x preset selected</span>
           </div>
 
           <div class="multiplier-row" id="multiplierRow" role="radiogroup" aria-label="FPS multiplier">
-            <button class="mult-card active" type="button" data-mode="auto" role="radio" aria-checked="true">
+            <button class="mult-card" type="button" data-mode="auto" role="radio" aria-checked="false">
               <span class="mult-num auto">Auto</span>
-              <span class="mult-result">Preserve detected FPS</span>
+              <span class="mult-result">2x for 60, 3x for 90, 4x for 120+</span>
             </button>
             <button class="mult-card" type="button" data-mode="2" role="radio" aria-checked="false">
               <span class="mult-num">2x</span>
               <span class="mult-result">60 to 120, 120 to 240</span>
             </button>
-            <button class="mult-card" type="button" data-mode="4" role="radio" aria-checked="false">
+            <button class="mult-card active" type="button" data-mode="4" role="radio" aria-checked="true">
               <span class="mult-num">4x</span>
-              <span class="mult-result">60 to 240, 120 to 480</span>
+              <span class="mult-result">App default preset</span>
             </button>
             <label class="mult-card custom-card" data-mode="custom">
               <span class="mult-num">Custom</span>

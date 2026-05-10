@@ -276,18 +276,18 @@
   }
 
 
-  function checkedU32(value, label) {
+  function checkedU32(value, label, min = 1) {
     const integer = Math.floor(value);
-    if (!Number.isFinite(integer) || integer < 1 || integer > 0xFFFFFFFF) {
+    if (!Number.isFinite(integer) || integer < min || integer > 0xFFFFFFFF) {
       throw new Error(`${label} would overflow a 32-bit MP4 field.`);
     }
     return integer;
   }
 
-  // Multiply mvhd/mdhd timescale and duration together so playback duration stays stable
-  // while stts-derived apparent FPS becomes detected FPS × multiplier.
-  function patchMp4Buffer(input, multiplier = 1) {
-    if (!Number.isFinite(multiplier) || multiplier < 1) throw new Error(`Invalid multiplier: ${multiplier}`);
+  // Match the desktop app: divide mvhd/mdhd timescale and duration by the selected
+  // divider. The UI calls this a multiplier because the output target is source FPS x divider.
+  function patchMp4Buffer(input, divider = 4) {
+    if (!Number.isFinite(divider) || divider < 1) throw new Error(`Invalid divider: ${divider}`);
     const source = asBytes(input);
     const bytes = new Uint8Array(source.byteLength);
     bytes.set(source);
@@ -295,15 +295,15 @@
     const moovs = findBoxes(bytes, 'moov');
     let mvhdCount = 0;
     let mdhdCount = 0;
-    const roundedMultiplier = Math.max(1, Math.round(multiplier));
+    const roundedDivider = Math.max(1, Math.round(divider));
 
     for (const moov of moovs) {
       const mvhd = findChild(bytes, moov, 'mvhd');
       if (mvhd) {
         const m = readMvhd(bytes, mvhd);
-        writeU32(view, m.timescaleOffset, checkedU32(m.timescale * roundedMultiplier, 'mvhd timescale'));
-        if (m.durationBytes === 4) writeU32(view, m.durationOffset, checkedU32(m.duration * roundedMultiplier, 'mvhd duration'));
-        else writeU64(view, m.durationOffset, m.duration * BigInt(roundedMultiplier));
+        writeU32(view, m.timescaleOffset, checkedU32(Math.max(1, m.timescale / roundedDivider), 'mvhd timescale'));
+        if (m.durationBytes === 4) writeU32(view, m.durationOffset, checkedU32(m.duration / roundedDivider, 'mvhd duration', 0));
+        else writeU64(view, m.durationOffset, m.duration / BigInt(roundedDivider));
         mvhdCount++;
       }
 
@@ -313,15 +313,15 @@
         const mdhd = mdia && findChild(bytes, mdia, 'mdhd');
         if (!mdhd) continue;
         const m = readMdhd(bytes, mdhd);
-        writeU32(view, m.timescaleOffset, checkedU32(m.timescale * roundedMultiplier, 'mdhd timescale'));
-        if (m.durationBytes === 4) writeU32(view, m.durationOffset, checkedU32(m.duration * roundedMultiplier, 'mdhd duration'));
-        else writeU64(view, m.durationOffset, m.duration * BigInt(roundedMultiplier));
+        writeU32(view, m.timescaleOffset, checkedU32(Math.max(1, m.timescale / roundedDivider), 'mdhd timescale'));
+        if (m.durationBytes === 4) writeU32(view, m.durationOffset, checkedU32(m.duration / roundedDivider, 'mdhd duration', 0));
+        else writeU64(view, m.durationOffset, m.duration / BigInt(roundedDivider));
         mdhdCount++;
       }
     }
 
     if (mvhdCount === 0 || mdhdCount === 0) throw new Error('No mvhd/mdhd timing boxes were found to patch.');
-    return { buffer: bytes.buffer, bytes, mvhdCount, mdhdCount, multiplier: roundedMultiplier };
+    return { buffer: bytes.buffer, bytes, mvhdCount, mdhdCount, divider: roundedDivider };
   }
 
   window.Upload120Patcher = { inspectMp4, patchMp4Buffer, walkBoxes };

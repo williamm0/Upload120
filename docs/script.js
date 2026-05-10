@@ -15,7 +15,7 @@
   const modeHint = document.querySelector('#modeHint');
   const navItems = [...document.querySelectorAll('[data-nav]')];
 
-  let selectedMode = 'auto';
+  let selectedMode = '4';
   let queue = [];
   let nextId = 1;
 
@@ -36,20 +36,26 @@
     return `${Number(fps.toFixed(3)).toLocaleString()} fps`;
   }
 
-  function getMultiplier() {
-    if (selectedMode === 'auto') return 1;
+  function pickAutoDivider(fps) {
+    if (fps >= 100) return 4;
+    if (fps >= 75) return 3;
+    return 2;
+  }
+
+  function getDivider(fps = 0) {
+    if (selectedMode === 'auto') return pickAutoDivider(fps);
     if (selectedMode === 'custom') return Math.max(2, Math.min(16, Number(customMultiplier.value) || 2));
     return Number(selectedMode);
   }
 
   function modeLabel(item) {
     if (item.mode === 'auto') return 'Auto';
-    if (item.mode === 'custom') return `${item.multiplier}x custom`;
-    return `${item.multiplier}x`;
+    if (item.mode === 'custom') return `${item.divider}x custom`;
+    return `${item.divider}x`;
   }
 
   function effectiveFps(item) {
-    return item.info?.fps ? item.info.fps * item.multiplier : 0;
+    return item.info?.fps ? item.info.fps * item.divider : 0;
   }
 
   function outputName(name) {
@@ -103,12 +109,11 @@
   async function addFiles(files) {
     const accepted = [...files].filter(allowedFile);
     for (const file of accepted) {
-      const multiplier = getMultiplier();
       const item = {
         id: nextId++,
         file,
         mode: selectedMode,
-        multiplier,
+        divider: selectedMode === 'auto' ? 0 : getDivider(),
         status: 'Inspecting',
         message: 'Inspecting',
         info: null,
@@ -124,6 +129,7 @@
         const info = patcher.inspectMp4(buffer);
         item.info = info;
         if (!info.isMp4 || info.error) throw new Error(info.error || 'Unsupported video container.');
+        if (item.mode === 'auto') item.divider = getDivider(info.fps);
         item.status = 'ready';
         item.message = 'Ready';
       } catch (error) {
@@ -143,7 +149,8 @@
       renderQueue();
 
       try {
-        const result = patcher.patchMp4Buffer(item.sourceBuffer, item.multiplier);
+        if (item.mode === 'auto') item.divider = getDivider(item.info?.fps || 0);
+        const result = patcher.patchMp4Buffer(item.sourceBuffer, item.divider);
         const blob = new Blob([result.bytes], { type: item.file.type || 'video/mp4' });
         if (item.url) URL.revokeObjectURL(item.url);
         item.outputName = outputName(item.file.name);
@@ -208,15 +215,15 @@
       if (el.matches('button')) el.setAttribute('aria-checked', active ? 'true' : 'false');
     });
     if (selectedMode === 'custom') customMultiplier.focus();
-    const multiplier = getMultiplier();
-    modeHint.textContent = selectedMode === 'auto' ? 'Auto preserves detected FPS' : `Output/effective FPS = detected FPS x ${multiplier}`;
+    const divider = getDivider();
+    modeHint.textContent = selectedMode === 'auto' ? 'Auto picks 2x for 60 fps, 3x for 90, 4x for 120+' : `Output/effective FPS = detected FPS x ${divider}`;
   });
 
   customMultiplier.addEventListener('input', () => {
     selectedMode = 'custom';
     const card = document.querySelector('.custom-card');
     document.querySelectorAll('[data-mode]').forEach(el => el.classList.toggle('active', el === card));
-    modeHint.textContent = `Output/effective FPS = detected FPS x ${getMultiplier()}`;
+    modeHint.textContent = `Output/effective FPS = detected FPS x ${getDivider()}`;
   });
 
   const observer = new IntersectionObserver(entries => {

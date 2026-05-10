@@ -15,7 +15,7 @@
   const modeHint = document.querySelector('#modeHint');
   const navItems = [...document.querySelectorAll('[data-nav]')];
 
-  let selectedMode = '4';
+  let selectedMode = 'auto';
   let queue = [];
   let nextId = 1;
 
@@ -59,7 +59,7 @@
   }
 
   function outputName(name) {
-    const suffix = suffixInput.value.trim() || '_120fps';
+    const suffix = suffixInput.value.trim() || '_patch';
     const dot = name.lastIndexOf('.');
     if (dot <= 0) return `${name}${suffix}`;
     return `${name.slice(0, dot)}${suffix}${name.slice(dot)}`;

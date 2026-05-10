@@ -58,11 +58,11 @@
               <p class="label">Multiplier</p>
               <h3 id="multiplierTitle">Choose the same timing patch used by the app.</h3>
             </div>
-            <span class="hint" id="modeHint">4x preset selected</span>
+            <span class="hint" id="modeHint">Auto picks 2x for 60 fps, 3x for 90, 4x for 120+</span>
           </div>
 
           <div class="multiplier-row" id="multiplierRow" role="radiogroup" aria-label="FPS multiplier">
-            <button class="mult-card" type="button" data-mode="auto" role="radio" aria-checked="false">
+            <button class="mult-card active" type="button" data-mode="auto" role="radio" aria-checked="true">
               <span class="mult-num auto">Auto</span>
               <span class="mult-result">2x for 60, 3x for 90, 4x for 120+</span>
             </button>
@@ -70,7 +70,7 @@
               <span class="mult-num">2x</span>
               <span class="mult-result">60 to 120, 120 to 240</span>
             </button>
-            <button class="mult-card active" type="button" data-mode="4" role="radio" aria-checked="true">
+            <button class="mult-card" type="button" data-mode="4" role="radio" aria-checked="false">
               <span class="mult-num">4x</span>
               <span class="mult-result">App default preset</span>
             </button>
@@ -132,7 +132,7 @@
       <div class="settings-grid">
         <label class="setting-row">
           <span><strong>Filename suffix</strong><small>Added before the file extension.</small></span>
-          <input id="suffixInput" type="text" value="_120fps" />
+          <input id="suffixInput" type="text" value="_patch" />
         </label>
         <label class="setting-row check-row">
           <span><strong>Download automatically</strong><small>Start each download when processing finishes.</small></span>

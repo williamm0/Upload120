@@ -11,9 +11,11 @@ const state = {
   outputMode: localStorage.getItem('outputMode') || 'suffix',
   suffix: localStorage.getItem('suffix') || '_120fps',
   outputFolder: localStorage.getItem('outputFolder') || null,
+  revealAfterPatch: localStorage.getItem('revealAfterPatch') === 'true',
   notify: localStorage.getItem('notify') !== 'false',
   busy: false,
   lastFps: 120,
+  lastOutputPath: '',
 
   // Post composer
   postFile: JSON.parse(localStorage.getItem('postFile') || 'null'),
@@ -62,6 +64,14 @@ const els = {
   stepPlus: $('#stepPlus'),
   multiplierHint: $('#multiplierHint'),
   quickMultiplierHint: $('#quickMultiplierHint'),
+  patchQueueCount: $('#patchQueueCount'),
+  patchAvgFps: $('#patchAvgFps'),
+  patchTargetFps: $('#patchTargetFps'),
+  patchDuration: $('#patchDuration'),
+  quickOutputMode: $('#quickOutputMode'),
+  quickSuffix: $('#quickSuffix'),
+  revealAfterPatchToggle: $('#revealAfterPatchToggle'),
+  openLastOutputBtn: $('#openLastOutputBtn'),
 
   outputMode: $('#outputMode'),
   suffix: $('#suffix'),
@@ -139,6 +149,10 @@ const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => (
   { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
 ));
 const cleanTag = (t) => String(t).trim().replace(/^#+/, '').replace(/\s+/g, '').toLowerCase();
+const fmtFps = (fps) => {
+  if (!Number.isFinite(fps) || fps <= 0) return '-';
+  return `${Number(fps.toFixed(fps >= 100 ? 0 : 1)).toLocaleString()} fps`;
+};
 
 const setStatus = (text, kind = '') => {
   els.status.textContent = text;
@@ -166,6 +180,31 @@ const updateProcessBtn = () => {
     state.busy ? `Processing…` : ready > 1 ? `Process ${ready}` : `Process`;
 };
 
+function updatePatchStats() {
+  const total = state.queue.length;
+  const ready = state.queue.filter(q => q.status === 'ready' && q.fps).length;
+  const withFps = state.queue.filter(q => Number.isFinite(q.fps) && q.fps > 0);
+
+  els.patchQueueCount.textContent = total === 0
+    ? '0 files'
+    : `${total} file${total === 1 ? '' : 's'} · ${ready} ready`;
+
+  if (withFps.length === 0) {
+    els.patchAvgFps.textContent = '-';
+    els.patchTargetFps.textContent = '-';
+    els.patchDuration.textContent = '0:00';
+    return;
+  }
+
+  const avgFps = withFps.reduce((sum, q) => sum + q.fps, 0) / withFps.length;
+  const avgTargetFps = withFps.reduce((sum, q) => sum + (q.fps * pickDivider(q.fps)), 0) / withFps.length;
+  const totalDuration = withFps.reduce((sum, q) => sum + (q.durationSec || 0), 0);
+
+  els.patchAvgFps.textContent = fmtFps(avgFps);
+  els.patchTargetFps.textContent = fmtFps(avgTargetFps);
+  els.patchDuration.textContent = fmtDuration(totalDuration);
+}
+
 // ═══ View switching ══════════════════════════════════════════════════════
 
 function showView(name) {
@@ -186,6 +225,7 @@ function renderQueue() {
         </div>
         <div class="qe-text">No files yet  -  drop a video above</div>
       </div>`;
+    updatePatchStats();
     return;
   }
   els.queue.innerHTML = '';
@@ -237,6 +277,7 @@ function renderQueue() {
       }
     });
   });
+  updatePatchStats();
 }
 
 function renderHistory() {
@@ -374,10 +415,12 @@ async function processAll() {
       failCount++;
     } else {
       q.status = 'done'; q.output = result.output; q.progress = 100;
+      state.lastOutputPath = result.output;
       pushHistory({
         input: q.path, output: result.output,
         fps: q.fps, effective: q.fps * div, ts: Date.now()
       });
+      if (state.revealAfterPatch) window.api.reveal(result.output);
       okCount++;
       lastDone = q;
     }
@@ -511,11 +554,16 @@ function syncMultiplierUI() {
       `${state.divider}×  -  multiplies apparent smoothness.`;
     els.quickMultiplierHint.textContent = state.divider === 4 ? '120 fps preset' : `${state.divider}× preset`;
   }
+  updatePatchStats();
 }
 
 els.outputMode.value = state.outputMode;
-els.outputMode.addEventListener('change', async () => {
-  state.outputMode = els.outputMode.value;
+if (els.quickOutputMode) els.quickOutputMode.value = state.outputMode;
+
+async function setOutputMode(nextMode) {
+  state.outputMode = nextMode;
+  els.outputMode.value = nextMode;
+  if (els.quickOutputMode) els.quickOutputMode.value = nextMode;
   localStorage.setItem('outputMode', state.outputMode);
   if (state.outputMode === 'folder') {
     const f = await window.api.saveFolder();
@@ -525,13 +573,51 @@ els.outputMode.addEventListener('change', async () => {
     }
   }
   updateOutputHint();
+}
+
+els.outputMode.addEventListener('change', async () => {
+  await setOutputMode(els.outputMode.value);
 });
+if (els.quickOutputMode) {
+  els.quickOutputMode.addEventListener('change', async () => {
+    await setOutputMode(els.quickOutputMode.value);
+  });
+}
+
 els.suffix.value = state.suffix;
-els.suffix.addEventListener('input', () => {
-  state.suffix = els.suffix.value || '_patched';
+if (els.quickSuffix) els.quickSuffix.value = state.suffix;
+
+function setSuffix(nextSuffix) {
+  state.suffix = nextSuffix || '_patched';
+  els.suffix.value = state.suffix;
+  if (els.quickSuffix) els.quickSuffix.value = state.suffix;
   localStorage.setItem('suffix', state.suffix);
   updateOutputHint();
+}
+
+els.suffix.addEventListener('input', () => {
+  setSuffix(els.suffix.value);
 });
+if (els.quickSuffix) {
+  els.quickSuffix.addEventListener('input', () => {
+    setSuffix(els.quickSuffix.value);
+  });
+}
+
+if (els.revealAfterPatchToggle) {
+  els.revealAfterPatchToggle.checked = state.revealAfterPatch;
+  els.revealAfterPatchToggle.addEventListener('change', () => {
+    state.revealAfterPatch = els.revealAfterPatchToggle.checked;
+    localStorage.setItem('revealAfterPatch', String(state.revealAfterPatch));
+  });
+}
+if (els.openLastOutputBtn) {
+  els.openLastOutputBtn.addEventListener('click', () => {
+    if (state.lastOutputPath) window.api.reveal(state.lastOutputPath);
+    else showToast('No patched output yet');
+  });
+}
+
 els.notifyToggle.checked = state.notify;
 els.notifyToggle.addEventListener('change', () => {
   state.notify = els.notifyToggle.checked;
@@ -539,6 +625,8 @@ els.notifyToggle.addEventListener('change', () => {
 });
 
 function updateOutputHint() {
+  if (els.quickOutputMode) els.quickOutputMode.value = state.outputMode;
+  if (els.quickSuffix) els.quickSuffix.value = state.suffix;
   if (state.outputMode === 'ask') {
     els.outputHint.textContent = 'A save dialog opens for each file.';
   } else if (state.outputMode === 'folder') {
@@ -551,7 +639,7 @@ function updateOutputHint() {
 
 if (els.resetAllBtn) els.resetAllBtn.addEventListener('click', () => {
   if (!confirm('Reset all settings, history, and saved hashtags? This cannot be undone.')) return;
-  ['history','divider','dividerMode','outputMode','suffix','outputFolder','notify',
+  ['history','divider','dividerMode','outputMode','suffix','outputFolder','revealAfterPatch','notify',
    'caption','hashtags','privacy','allowComments','allowDuet','allowStitch',
    'aiContent','branded','schedule','postFile'].forEach(k => localStorage.removeItem(k));
   showToast('Reset complete  -  restart for a clean state');
@@ -947,6 +1035,9 @@ window.api.onMenu('menu:showHelp', () => showView('about'));
   els.aboutVersion.textContent = 'Version ' + v;
 
   // Patcher state
+  if (state.history[0] && state.history[0].output) {
+    state.lastOutputPath = state.history[0].output;
+  }
   syncMultiplierUI();
   updateOutputHint();
   renderHistory();

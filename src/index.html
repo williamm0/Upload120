@@ -75,6 +75,29 @@
           <span>For the trick to work, the patched video must be uploaded from a <strong>computer</strong>  -  not the phone app.</span>
         </div>
 
+        <div class="patch-stats" id="patchStats">
+          <article class="stat-card">
+            <span class="stat-label">Queue</span>
+            <strong class="stat-value" id="patchQueueCount">0 files</strong>
+            <span class="stat-note">Ready to process</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Detected FPS</span>
+            <strong class="stat-value" id="patchAvgFps">-</strong>
+            <span class="stat-note">Average in queue</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Output FPS</span>
+            <strong class="stat-value" id="patchTargetFps">-</strong>
+            <span class="stat-note">Based on current multiplier</span>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Duration</span>
+            <strong class="stat-value" id="patchDuration">0:00</strong>
+            <span class="stat-note">Total detected runtime</span>
+          </article>
+        </div>
+
         <div class="dropzone" id="dropzone">
           <div class="dz-glow"></div>
           <div class="dz-content">
@@ -85,6 +108,24 @@
             <h2 class="dz-title">Drop videos here</h2>
             <p class="dz-sub">or <button class="link-btn" id="browseBtn">choose files</button> · MP4, MOV, M4V</p>
           </div>
+        </div>
+
+        <div class="website-details">
+          <article>
+            <span>mvhd</span>
+            <h4>Movie timing</h4>
+            <p>Updates global timescale and duration fields at container level.</p>
+          </article>
+          <article>
+            <span>mdhd</span>
+            <h4>Track timing</h4>
+            <p>Rewrites media header timing values so each track stays consistent.</p>
+          </article>
+          <article>
+            <span>stts</span>
+            <h4>FPS estimate</h4>
+            <p>Reads sample deltas to estimate frame rate before selecting a divider.</p>
+          </article>
         </div>
 
         <div class="card-block">
@@ -108,6 +149,36 @@
               <div class="mult-label">Auto</div>
               <div class="mult-result">per file</div>
             </button>
+          </div>
+        </div>
+
+        <div class="card-block">
+          <div class="card-block-head">
+            <h3>Quick output settings</h3>
+            <span class="kbd-hint">Website-style controls</span>
+          </div>
+          <div class="quick-output-card">
+            <div class="quick-output-grid">
+              <label class="quick-field">
+                <span class="quick-label">Save location</span>
+                <select id="quickOutputMode" class="select">
+                  <option value="suffix">Same folder · add suffix</option>
+                  <option value="folder">Choose a folder…</option>
+                  <option value="ask">Ask for each file</option>
+                </select>
+              </label>
+              <label class="quick-field">
+                <span class="quick-label">Filename suffix</span>
+                <input type="text" id="quickSuffix" class="input mono grow" value="_120fps" />
+              </label>
+            </div>
+            <div class="quick-output-foot">
+              <label class="quick-toggle">
+                <input type="checkbox" id="revealAfterPatchToggle" />
+                <span>Open output folder after each success</span>
+              </label>
+              <button class="ghost-btn" id="openLastOutputBtn">Open last output</button>
+            </div>
           </div>
         </div>
 

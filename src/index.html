@@ -75,29 +75,6 @@
           <span>For the trick to work, the patched video must be uploaded from a <strong>computer</strong>  -  not the phone app.</span>
         </div>
 
-        <div class="patch-stats" id="patchStats">
-          <article class="stat-card">
-            <span class="stat-label">Queue</span>
-            <strong class="stat-value" id="patchQueueCount">0 files</strong>
-            <span class="stat-note">Ready to process</span>
-          </article>
-          <article class="stat-card">
-            <span class="stat-label">Detected FPS</span>
-            <strong class="stat-value" id="patchAvgFps">-</strong>
-            <span class="stat-note">Average in queue</span>
-          </article>
-          <article class="stat-card">
-            <span class="stat-label">Output FPS</span>
-            <strong class="stat-value" id="patchTargetFps">-</strong>
-            <span class="stat-note">Based on current multiplier</span>
-          </article>
-          <article class="stat-card">
-            <span class="stat-label">Duration</span>
-            <strong class="stat-value" id="patchDuration">0:00</strong>
-            <span class="stat-note">Total detected runtime</span>
-          </article>
-        </div>
-
         <div class="dropzone" id="dropzone">
           <div class="dz-glow"></div>
           <div class="dz-content">
@@ -121,11 +98,6 @@
               <div class="mult-label">60 fps source</div>
               <div class="mult-result">→ 120 apparent</div>
             </button>
-            <button class="mult-card" data-divider="3">
-              <div class="mult-num">3<span class="mult-x">×</span></div>
-              <div class="mult-label">90 fps source</div>
-              <div class="mult-result">→ 270 apparent</div>
-            </button>
             <button class="mult-card active" data-divider="4">
               <div class="mult-num">4<span class="mult-x">×</span></div>
               <div class="mult-label">120 fps source</div>
@@ -136,52 +108,13 @@
               <div class="mult-label">Auto</div>
               <div class="mult-result">per file</div>
             </button>
-            <button class="mult-card custom" data-divider="custom">
-              <div class="mult-num">C</div>
-              <div class="mult-label">Custom</div>
-              <div class="mult-result"><input type="number" id="quickCustomDivider" min="2" max="16" step="1" value="4" /> ×</div>
-            </button>
-          </div>
-        </div>
-
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Quick output settings</h3>
-            <span class="kbd-hint">Patch workflow shortcuts</span>
-          </div>
-          <div class="quick-output-card">
-            <div class="quick-output-grid">
-              <label class="quick-field">
-                <span class="quick-label">Save location</span>
-                <select id="quickOutputMode" class="select">
-                  <option value="suffix">Same folder · add suffix</option>
-                  <option value="folder">Choose a folder…</option>
-                  <option value="ask">Ask for each file</option>
-                </select>
-              </label>
-              <label class="quick-field">
-                <span class="quick-label">Filename suffix</span>
-                <input type="text" id="quickSuffix" class="input mono grow" value="_120fps" />
-              </label>
-            </div>
-            <div class="quick-output-foot">
-              <label class="quick-toggle">
-                <input type="checkbox" id="revealAfterPatchToggle" />
-                <span>Open output folder after each success</span>
-              </label>
-              <button class="ghost-btn" id="openLastOutputBtn">Open last output</button>
-            </div>
           </div>
         </div>
 
         <div class="card-block">
           <div class="card-block-head">
             <h3>Queue</h3>
-            <div class="queue-head-actions">
-              <button class="ghost-btn" id="retryFailedBtn">Retry failed</button>
-              <button class="ghost-btn" id="removeDoneBtn">Remove done</button>
-              <button class="ghost-btn" id="clearQueueBtn">Clear</button>
-            </div>
+            <button class="ghost-btn" id="clearQueueBtn">Clear</button>
           </div>
           <div class="queue" id="queue">
             <div class="queue-empty">

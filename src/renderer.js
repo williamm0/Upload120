@@ -54,6 +54,8 @@ const els = {
   processBtn: $('#processBtn'),
   browseBtn: $('#browseBtn'),
   clearQueueBtn: $('#clearQueueBtn'),
+  retryFailedBtn: $('#retryFailedBtn'),
+  removeDoneBtn: $('#removeDoneBtn'),
   clearHistoryBtn: $('#clearHistoryBtn'),
   resetAllBtn: $('#resetAllBtn'),
 
@@ -70,6 +72,7 @@ const els = {
   patchDuration: $('#patchDuration'),
   quickOutputMode: $('#quickOutputMode'),
   quickSuffix: $('#quickSuffix'),
+  quickCustomDivider: $('#quickCustomDivider'),
   revealAfterPatchToggle: $('#revealAfterPatchToggle'),
   openLastOutputBtn: $('#openLastOutputBtn'),
 
@@ -365,6 +368,37 @@ function clearQueue() {
   setStatus('Ready');
 }
 
+async function retryFailedQueueItems() {
+  if (state.busy) return;
+  const failed = state.queue.filter(q => q.status === 'error');
+  if (failed.length === 0) {
+    showToast('No failed items');
+    return;
+  }
+  for (const q of failed) {
+    q.error = '';
+    q.progress = 0;
+    q.status = q.fps ? 'ready' : 'reading';
+  }
+  renderQueue();
+  for (const q of failed.filter(item => !item.fps)) await inspectQueueItem(q);
+  updateProcessBtn();
+  setStatus(`Retried ${failed.length} failed item${failed.length === 1 ? '' : 's'}`);
+}
+
+function removeDoneQueueItems() {
+  if (state.busy) return;
+  const before = state.queue.length;
+  state.queue = state.queue.filter(q => q.status !== 'done');
+  const removed = before - state.queue.length;
+  renderQueue();
+  updateProcessBtn();
+  if (removed > 0) showToast(`Removed ${removed} done item${removed === 1 ? '' : 's'}`);
+  setStatus(state.queue.length > 0
+    ? `${state.queue.length} file${state.queue.length === 1 ? '' : 's'} ready`
+    : 'Ready');
+}
+
 async function resolveOutputPath(q) {
   const parsed = window.api.parsePath(q.path);
   const safeBase = parsed.name + (state.suffix || '_120fps') + '.mp4';
@@ -486,6 +520,8 @@ els.browseBtn.addEventListener('click', async (e) => {
   if (paths.length) await addFiles(paths);
 });
 els.clearQueueBtn.addEventListener('click', clearQueue);
+if (els.retryFailedBtn) els.retryFailedBtn.addEventListener('click', retryFailedQueueItems);
+if (els.removeDoneBtn) els.removeDoneBtn.addEventListener('click', removeDoneQueueItems);
 els.clearHistoryBtn.addEventListener('click', () => {
   state.history = [];
   localStorage.setItem('history', '[]');
@@ -501,6 +537,10 @@ els.multiplierRow.querySelectorAll('.mult-card').forEach(card => {
     setDivider(v);
   });
 });
+if (els.quickCustomDivider) {
+  els.quickCustomDivider.addEventListener('click', (e) => e.stopPropagation());
+  els.quickCustomDivider.addEventListener('change', () => setCustomDivider(Number(els.quickCustomDivider.value)));
+}
 
 // Settings: segmented multiplier
 els.segMultiplier.querySelectorAll('.seg').forEach(seg => {
@@ -515,10 +555,14 @@ els.customDivider.addEventListener('change', () => setCustomDivider(Number(els.c
 function setDivider(value) {
   if (value === 'auto') {
     state.dividerMode = 'auto';
+  } else if (value === 'custom') {
+    setCustomDivider(Number(els.quickCustomDivider?.value || els.customDivider.value || state.divider));
+    return;
   } else {
     state.dividerMode = 'fixed';
     state.divider = Math.max(2, Math.min(16, Number(value) || 4));
     els.customDivider.value = state.divider;
+    if (els.quickCustomDivider) els.quickCustomDivider.value = state.divider;
   }
   syncMultiplierUI();
   localStorage.setItem('dividerMode', state.dividerMode);
@@ -529,18 +573,22 @@ function setCustomDivider(v) {
   state.dividerMode = 'fixed';
   state.divider = v;
   els.customDivider.value = v;
+  if (els.quickCustomDivider) els.quickCustomDivider.value = v;
   syncMultiplierUI();
   localStorage.setItem('dividerMode', 'fixed');
   localStorage.setItem('divider', String(v));
 }
 function syncMultiplierUI() {
-  const target = state.dividerMode === 'auto' ? 'auto' : String(state.divider);
+  const target = state.dividerMode === 'auto'
+    ? 'auto'
+    : (['2', '3', '4'].includes(String(state.divider)) ? String(state.divider) : 'custom');
   els.multiplierRow.querySelectorAll('.mult-card').forEach(c => {
     c.classList.toggle('active', c.dataset.divider === target);
   });
   els.segMultiplier.querySelectorAll('.seg').forEach(s => {
-    s.classList.toggle('active', s.dataset.divider === target);
+    s.classList.toggle('active', s.dataset.divider === (state.dividerMode === 'auto' ? 'auto' : String(state.divider)));
   });
+  if (els.quickCustomDivider) els.quickCustomDivider.value = state.divider;
   if (state.dividerMode === 'auto') {
     els.multiplierHint.textContent = 'Auto  -  picks 2× for 60 fps, 3× for 90, 4× for 120+ per file.';
     els.quickMultiplierHint.textContent = 'Auto per file';

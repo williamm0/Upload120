@@ -110,24 +110,6 @@
           </div>
         </div>
 
-        <div class="website-details">
-          <article>
-            <span>mvhd</span>
-            <h4>Movie timing</h4>
-            <p>Updates global timescale and duration fields at container level.</p>
-          </article>
-          <article>
-            <span>mdhd</span>
-            <h4>Track timing</h4>
-            <p>Rewrites media header timing values so each track stays consistent.</p>
-          </article>
-          <article>
-            <span>stts</span>
-            <h4>FPS estimate</h4>
-            <p>Reads sample deltas to estimate frame rate before selecting a divider.</p>
-          </article>
-        </div>
-
         <div class="card-block">
           <div class="card-block-head">
             <h3>Multiplier</h3>
@@ -139,6 +121,11 @@
               <div class="mult-label">60 fps source</div>
               <div class="mult-result">→ 120 apparent</div>
             </button>
+            <button class="mult-card" data-divider="3">
+              <div class="mult-num">3<span class="mult-x">×</span></div>
+              <div class="mult-label">90 fps source</div>
+              <div class="mult-result">→ 270 apparent</div>
+            </button>
             <button class="mult-card active" data-divider="4">
               <div class="mult-num">4<span class="mult-x">×</span></div>
               <div class="mult-label">120 fps source</div>
@@ -149,13 +136,18 @@
               <div class="mult-label">Auto</div>
               <div class="mult-result">per file</div>
             </button>
+            <button class="mult-card custom" data-divider="custom">
+              <div class="mult-num">C</div>
+              <div class="mult-label">Custom</div>
+              <div class="mult-result"><input type="number" id="quickCustomDivider" min="2" max="16" step="1" value="4" /> ×</div>
+            </button>
           </div>
         </div>
 
         <div class="card-block">
           <div class="card-block-head">
             <h3>Quick output settings</h3>
-            <span class="kbd-hint">Website-style controls</span>
+            <span class="kbd-hint">Patch workflow shortcuts</span>
           </div>
           <div class="quick-output-card">
             <div class="quick-output-grid">
@@ -185,7 +177,11 @@
         <div class="card-block">
           <div class="card-block-head">
             <h3>Queue</h3>
-            <button class="ghost-btn" id="clearQueueBtn">Clear</button>
+            <div class="queue-head-actions">
+              <button class="ghost-btn" id="retryFailedBtn">Retry failed</button>
+              <button class="ghost-btn" id="removeDoneBtn">Remove done</button>
+              <button class="ghost-btn" id="clearQueueBtn">Clear</button>
+            </div>
           </div>
           <div class="queue" id="queue">
             <div class="queue-empty">

@@ -9,521 +9,443 @@
 <body>
   <div class="titlebar"></div>
 
-  <div class="ambient">
-    <div class="ambient-blob a"></div>
-    <div class="ambient-blob b"></div>
-    <div class="ambient-blob c"></div>
-  </div>
+  <header class="topbar">
+    <button class="brand" type="button" data-view="patch" aria-label="Upload120 home">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 36 36" width="36" height="36">
+          <rect x="1" y="1" width="34" height="34" rx="9" fill="#111" />
+          <path d="M13 11l12 7-12 7V11z" fill="#fff" />
+        </svg>
+      </span>
+      <span>Upload120</span>
+    </button>
 
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo-wrap">
-          <svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true">
-            <defs>
-              <linearGradient id="lgrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stop-color="#7B5CFF"/>
-                <stop offset="55%" stop-color="#3D7BFF"/>
-                <stop offset="100%" stop-color="#00C2FF"/>
-              </linearGradient>
-            </defs>
-            <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#lgrad)"/>
-            <path d="M22 22 L36 32 L22 42 Z" fill="white" opacity="0.30"/>
-            <path d="M30 22 L44 32 L30 42 Z" fill="white"/>
-          </svg>
-        </div>
-        <div class="brand-text">Upload<span class="num">120</span></div>
+    <nav class="nav" aria-label="App sections">
+      <button class="nav-item active" type="button" data-view="patch">Patch</button>
+      <button class="nav-item" type="button" data-view="post">Post</button>
+      <button class="nav-item" type="button" data-view="settings">Settings</button>
+      <button class="nav-item" type="button" data-view="about">About</button>
+    </nav>
+
+    <div class="top-meta">
+      <span id="versionTag">Version</span>
+      <a href="#" data-link="https://jxffx.com">jxffx.com</a>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="view active hero-shell" data-view="patch" id="patch">
+      <div class="intro">
+        <p class="eyebrow">Desktop MP4 patcher</p>
+        <h1>High-FPS metadata, patched locally.</h1>
+        <p class="lead">Upload120 rewrites MP4 timing headers on this computer. Your frames stay untouched, and the patched file is ready for a desktop upload.</p>
+        <div class="notice">For the best result, upload the patched file from a computer. Mobile apps may re-encode the video.</div>
       </div>
 
-      <nav class="nav">
-        <button class="nav-item active" data-view="patch">
-          <svg viewBox="0 0 24 24" width="15" height="15"><path d="M5 3l14 9-14 9V3z" fill="currentColor"/></svg>
-          <span>Patch</span>
-        </button>
-        <button class="nav-item" data-view="post">
-          <svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 4h16v12H5l-1 1V4z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>
-          <span>Post</span>
-        </button>
-        <button class="nav-item" data-view="settings">
-          <svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg>
-          <span>Settings</span>
-        </button>
-        <button class="nav-item" data-view="about">
-          <svg viewBox="0 0 24 24" width="15" height="15"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M12 8v.01M11 12h1v5h1" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg>
-          <span>About</span>
-        </button>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="made-by">
-          Made by <a href="#" data-link="https://jxffx.com">jx</a>
-        </div>
-        <span class="version" id="versionTag">v1.0</span>
-      </div>
-    </aside>
-
-    <main class="main">
-      <!-- ═══ Patch view ═══════════════════════════════════════════════ -->
-      <section class="view active" data-view="patch">
-        <header class="view-head">
-          <h1>Patch</h1>
-          <p class="view-sub">Drop a high-FPS video. We rewrite the metadata so 60/120 fps survives the upload.</p>
-        </header>
-
-        <div class="banner info">
-          <svg viewBox="0 0 24 24" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M12 8v.01M11 12h1v5h1" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
-          <span>For the trick to work, the patched video must be uploaded from a <strong>computer</strong>  -  not the phone app.</span>
-        </div>
-
+      <div class="patcher">
         <div class="dropzone" id="dropzone">
-          <div class="dz-glow"></div>
           <div class="dz-content">
-            <svg viewBox="0 0 24 24" width="38" height="38" aria-hidden="true" class="dz-icon">
-              <path d="M12 4v12M7 11l5-5 5 5" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M5 17v2a2 2 0 002 2h10a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+            <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true" class="dz-icon">
+              <path d="M12 4v10M8 8l4-4 4 4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 15v3.2A1.8 1.8 0 006.8 20h10.4a1.8 1.8 0 001.8-1.8V15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
             </svg>
-            <h2 class="dz-title">Drop videos here</h2>
-            <p class="dz-sub">or <button class="link-btn" id="browseBtn">choose files</button> · MP4, MOV, M4V</p>
+            <h2 class="dz-title">Drop video files here</h2>
+            <p class="dz-sub"><button class="link-btn" id="browseBtn" type="button">Choose files</button> or drag in MP4, MOV, or M4V videos.</p>
           </div>
         </div>
 
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Multiplier</h3>
-            <span class="kbd-hint" id="quickMultiplierHint">120 fps preset</span>
+        <section class="control-panel" aria-labelledby="multiplierTitle">
+          <div class="panel-head">
+            <div>
+              <p class="label">Multiplier</p>
+              <h3 id="multiplierTitle">Choose the timing patch.</h3>
+            </div>
+            <span class="hint" id="quickMultiplierHint">120 fps preset</span>
           </div>
           <div class="multiplier-row" id="multiplierRow">
-            <button class="mult-card" data-divider="2">
-              <div class="mult-num">2<span class="mult-x">×</span></div>
-              <div class="mult-label">60 fps source</div>
-              <div class="mult-result">→ 120 apparent</div>
+            <button class="mult-card" type="button" data-divider="2">
+              <span class="mult-num">2x</span>
+              <span class="mult-label">60 fps source</span>
+              <span class="mult-result">60 to 120 apparent</span>
             </button>
-            <button class="mult-card active" data-divider="4">
-              <div class="mult-num">4<span class="mult-x">×</span></div>
-              <div class="mult-label">120 fps source</div>
-              <div class="mult-result">→ 480 apparent</div>
+            <button class="mult-card active" type="button" data-divider="4">
+              <span class="mult-num">4x</span>
+              <span class="mult-label">120 fps source</span>
+              <span class="mult-result">App default preset</span>
             </button>
-            <button class="mult-card" data-divider="auto">
-              <div class="mult-num auto">A</div>
-              <div class="mult-label">Auto</div>
-              <div class="mult-result">per file</div>
+            <button class="mult-card" type="button" data-divider="auto">
+              <span class="mult-num auto">Auto</span>
+              <span class="mult-label">Per file</span>
+              <span class="mult-result">2x, 3x, or 4x</span>
             </button>
           </div>
-        </div>
+        </section>
 
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Queue</h3>
-            <button class="ghost-btn" id="clearQueueBtn">Clear</button>
+        <section class="control-panel queue-card" aria-labelledby="queueTitle">
+          <div class="panel-head">
+            <div>
+              <p class="label">Queue</p>
+              <h3 id="queueTitle">Ready files appear here.</h3>
+            </div>
+            <div class="queue-actions">
+              <button class="ghost-btn" id="clearQueueBtn" type="button">Clear</button>
+              <button class="primary small" id="processBtn" type="button" disabled>
+                <span class="btn-glow"></span>
+                <span class="btn-label">Process</span>
+              </button>
+            </div>
           </div>
-          <div class="queue" id="queue">
+          <div class="queue" id="queue" aria-live="polite">
             <div class="queue-empty">
               <div class="qe-icon">
                 <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 4l14 8-14 8V4z" fill="currentColor" opacity="0.5"/></svg>
               </div>
-              <div class="qe-text">No files yet  -  drop a video above</div>
+              <div class="qe-text">No files yet. Drop a video above.</div>
+            </div>
+          </div>
+          <div class="status-line">
+            <span class="status" id="status">Ready</span>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="view page-shell" data-view="post" id="post">
+      <div class="section-copy">
+        <p class="eyebrow">TikTok composer</p>
+        <h2>Patch, caption, and post from the desktop path.</h2>
+        <p>Compose your TikTok upload inside Upload120. The app keeps your web session and uses the desktop upload pipeline.</p>
+      </div>
+
+      <div class="notice">TikTok must be uploaded from a computer for the patch to work. The phone app re-compresses to 30 fps.</div>
+
+      <div class="quality-card">
+        <div class="quality-header">
+          <svg viewBox="0 0 24 24" width="16" height="16" class="quality-icon"><path d="M12 2l2.6 6.5L22 9l-5 4.5L18.2 21 12 17.5 5.8 21 7 13.5 2 9l7.4-.5L12 2z" fill="currentColor"/></svg>
+          <span class="quality-title">120 fps plus better quality</span>
+        </div>
+        <p class="quality-body">Posting through Upload120 keeps the original 60/120 fps frames and nudges TikTok toward a softer compression path. <a href="#" data-link-view="about">Why this works</a></p>
+      </div>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">TikTok account</p>
+            <h3 id="connectionLabel">Checking...</h3>
+          </div>
+        </div>
+        <div class="connection-card" id="connectionCard">
+          <div class="connection-info">
+            <div class="connection-dot" id="connectionDot"></div>
+            <div class="connection-text">
+              <div class="connection-title" id="connectionTitle">Not connected</div>
+              <div class="connection-sub" id="connectionSub">Sign in once. Upload120 keeps your session.</div>
+            </div>
+          </div>
+          <div class="connection-actions">
+            <button class="secondary" id="connectBtn" type="button">Sign in to TikTok</button>
+            <button class="ghost-btn danger" id="disconnectBtn" type="button" hidden>Disconnect</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Video</p>
+            <h3 id="postFileHint">No file selected</h3>
+          </div>
+        </div>
+        <div class="post-file" id="postFile">
+          <div class="post-file-empty" id="postFileEmpty">
+            <div class="muted">Pick a patched video to attach to this post.</div>
+            <button class="secondary" id="pickPostFileBtn" type="button">Choose file</button>
+          </div>
+          <div class="post-file-active" id="postFileActive" hidden>
+            <div class="post-file-info">
+              <div class="post-file-thumb">
+                <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 4l14 8-14 8V4z" fill="currentColor"/></svg>
+              </div>
+              <div class="post-file-meta">
+                <div class="post-file-name" id="postFileName">-</div>
+                <div class="post-file-detail" id="postFileDetail">-</div>
+              </div>
+            </div>
+            <div class="post-file-actions">
+              <button class="ghost-btn" id="revealPostFileBtn" type="button">Show in folder</button>
+              <button class="ghost-btn" id="changePostFileBtn" type="button">Change</button>
             </div>
           </div>
         </div>
+      </section>
 
-        <div class="action-bar">
-          <div class="status" id="status">Ready</div>
-          <button class="primary" id="processBtn" disabled>
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Caption</p>
+            <h3><span id="captionCount">0</span> / 2200</h3>
+          </div>
+        </div>
+        <textarea class="caption" id="caption" placeholder="Write your caption..." maxlength="2200"></textarea>
+        <div class="caption-tools">
+          <div class="hashtag-chips" id="hashtagChips"></div>
+          <button class="ghost-btn" id="appendHashtagsBtn" type="button">Add selected tags</button>
+        </div>
+      </section>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Hashtag library</p>
+            <h3 id="hashtagCount">0 saved</h3>
+          </div>
+        </div>
+        <div class="hashtag-input-row">
+          <input type="text" class="input grow" id="newHashtagInput" placeholder="Add hashtag like fyp, foryou, viral" />
+          <button class="secondary" id="addHashtagBtn" type="button">Add</button>
+        </div>
+        <div class="hashtag-library" id="hashtagLibrary"></div>
+      </section>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Post options</p>
+            <h3>Privacy and interaction settings.</h3>
+          </div>
+        </div>
+        <div class="settings-card flush">
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Privacy</div>
+              <div class="row-sub">Set in TikTok before posting.</div>
+            </div>
+            <div class="row-control">
+              <div class="seg-control" id="privacySeg">
+                <button class="seg active" type="button" data-privacy="public">Public</button>
+                <button class="seg" type="button" data-privacy="friends">Friends</button>
+                <button class="seg" type="button" data-privacy="private">Only me</button>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-title">Allow comments</div></div>
+            <div class="row-control"><label class="toggle"><input type="checkbox" id="allowCommentsToggle" checked /><span class="track"><span class="thumb"></span></span></label></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-title">Allow Duet</div></div>
+            <div class="row-control"><label class="toggle"><input type="checkbox" id="allowDuetToggle" checked /><span class="track"><span class="thumb"></span></span></label></div>
+          </div>
+          <div class="row">
+            <div class="row-main"><div class="row-title">Allow Stitch</div></div>
+            <div class="row-control"><label class="toggle"><input type="checkbox" id="allowStitchToggle" checked /><span class="track"><span class="thumb"></span></span></label></div>
+          </div>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">AI-generated content</div>
+              <div class="row-sub">Disclose if the video uses generative AI.</div>
+            </div>
+            <div class="row-control"><label class="toggle"><input type="checkbox" id="aiContentToggle" /><span class="track"><span class="thumb"></span></span></label></div>
+          </div>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Run a brand promotion</div>
+              <div class="row-sub">Required if it is an ad or paid partnership.</div>
+            </div>
+            <div class="row-control"><label class="toggle"><input type="checkbox" id="brandedToggle" /><span class="track"><span class="thumb"></span></span></label></div>
+          </div>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Schedule reminder</div>
+              <div class="row-sub" id="scheduleHint">Off. Post now.</div>
+            </div>
+            <div class="row-control"><input type="datetime-local" class="input" id="scheduleInput" /></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="post-action-bar">
+        <div class="post-flow">
+          <div class="flow-step"><span class="flow-num">1</span> Attach video</div>
+          <div class="flow-step"><span class="flow-num">2</span> Fill caption</div>
+          <div class="flow-step"><span class="flow-num">3</span> Post</div>
+        </div>
+        <div class="upload-progress" id="uploadProgress" hidden>
+          <div class="up-bar"><div class="up-fill" id="uploadFill"></div></div>
+          <div class="up-stage" id="uploadStage">Starting...</div>
+        </div>
+        <div class="post-action-buttons">
+          <label class="quick-toggle">
+            <input type="checkbox" id="autoPostToggle" checked />
+            <span>Auto-post when ready</span>
+          </label>
+          <button class="secondary" id="copyCaptionBtn" type="button">Copy caption</button>
+          <button class="primary" id="uploadBtn" type="button">
             <span class="btn-glow"></span>
-            <span class="btn-label">Process</span>
+            <span class="btn-label">Upload to TikTok</span>
           </button>
         </div>
-      </section>
+        <div class="post-status" id="postStatus"></div>
+      </div>
+    </section>
 
-      <!-- ═══ Post view ═══════════════════════════════════════════════ -->
-      <section class="view" data-view="post">
-        <header class="view-head">
-          <h1>Post</h1>
-          <p class="view-sub">Compose your TikTok upload. We open the browser and prefill everything.</p>
-        </header>
+    <section class="view page-shell" data-view="settings" id="settings">
+      <div class="section-copy">
+        <p class="eyebrow">Settings</p>
+        <h2>Output preferences</h2>
+      </div>
 
-        <div class="banner warn">
-          <svg viewBox="0 0 24 24" width="14" height="14"><path d="M12 2L2 22h20L12 2z" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/><path d="M12 9v5M12 17v.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          <span>TikTok must be uploaded from a <strong>computer</strong> for the patch to work. The phone app re-compresses to 30 fps. Upload120 uses TikTok's web pipeline directly  -  same as the desktop browser.</span>
-        </div>
-
-        <div class="quality-card">
-          <div class="quality-header">
-            <svg viewBox="0 0 24 24" width="16" height="16" class="quality-icon"><path d="M12 2l2.6 6.5L22 9l-5 4.5L18.2 21 12 17.5 5.8 21 7 13.5 2 9l7.4-.5L12 2z" fill="currentColor"/></svg>
-            <span class="quality-title">120 fps + better quality</span>
-          </div>
-          <p class="quality-body">
-            Posting through Upload120 keeps the original 60/120 fps frames <strong>and</strong> bumps quality. TikTok's encoder picks a bitrate budget per second of apparent video. With the timescale rewritten, your real frames pass through a softer compression path  -  sharper detail, fewer blocking artefacts, real high-FPS motion. <a href="#" data-link-view="about">Why this works →</a>
-          </p>
-        </div>
-
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>TikTok account</h3>
-            <span class="kbd-hint" id="connectionLabel">Checking…</span>
-          </div>
-          <div class="connection-card" id="connectionCard">
-            <div class="connection-info">
-              <div class="connection-dot" id="connectionDot"></div>
-              <div class="connection-text">
-                <div class="connection-title" id="connectionTitle">Not connected</div>
-                <div class="connection-sub" id="connectionSub">Sign in once  -  Upload120 keeps your session.</div>
-              </div>
-            </div>
-            <div class="connection-actions">
-              <button class="secondary" id="connectBtn">Sign in to TikTok</button>
-              <button class="ghost-btn danger" id="disconnectBtn" hidden>Disconnect</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Video</h3>
-            <span class="kbd-hint" id="postFileHint">No file selected</span>
-          </div>
-          <div class="post-file" id="postFile">
-            <div class="post-file-empty" id="postFileEmpty">
-              <div class="muted">Pick a patched video to attach to this post.</div>
-              <button class="secondary" id="pickPostFileBtn">Choose file</button>
-            </div>
-            <div class="post-file-active" id="postFileActive" hidden>
-              <div class="post-file-info">
-                <div class="post-file-thumb">
-                  <svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 4l14 8-14 8V4z" fill="currentColor"/></svg>
-                </div>
-                <div class="post-file-meta">
-                  <div class="post-file-name" id="postFileName"> - </div>
-                  <div class="post-file-detail" id="postFileDetail"> - </div>
-                </div>
-              </div>
-              <div class="post-file-actions">
-                <button class="ghost-btn" id="revealPostFileBtn">Show in folder</button>
-                <button class="ghost-btn" id="changePostFileBtn">Change</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Caption</h3>
-            <span class="kbd-hint"><span id="captionCount">0</span> / 2200</span>
-          </div>
-          <textarea class="caption" id="caption" placeholder="Write your caption..." maxlength="2200"></textarea>
-          <div class="caption-tools">
-            <div class="hashtag-chips" id="hashtagChips"></div>
-            <div class="caption-actions">
-              <button class="ghost-btn" id="appendHashtagsBtn">Add selected tags</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Hashtag library</h3>
-            <span class="kbd-hint" id="hashtagCount">0 saved</span>
-          </div>
-          <div class="hashtag-input-row">
-            <input type="text" class="input grow" id="newHashtagInput" placeholder="Add hashtag like fyp, foryou, viral" />
-            <button class="secondary" id="addHashtagBtn">Add</button>
-          </div>
-          <div class="hashtag-library" id="hashtagLibrary"></div>
-        </div>
-
-        <div class="card-block">
-          <div class="card-block-head">
-            <h3>Options</h3>
-          </div>
-          <div class="settings-card flush">
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Privacy</div>
-                <div class="row-sub">Set in TikTok before posting.</div>
-              </div>
-              <div class="row-control">
-                <div class="seg-control" id="privacySeg">
-                  <button class="seg active" data-privacy="public">Public</button>
-                  <button class="seg" data-privacy="friends">Friends</button>
-                  <button class="seg" data-privacy="private">Only me</button>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Allow comments</div>
-              </div>
-              <div class="row-control">
-                <label class="toggle">
-                  <input type="checkbox" id="allowCommentsToggle" checked />
-                  <span class="track"><span class="thumb"></span></span>
-                </label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Allow Duet</div>
-              </div>
-              <div class="row-control">
-                <label class="toggle">
-                  <input type="checkbox" id="allowDuetToggle" checked />
-                  <span class="track"><span class="thumb"></span></span>
-                </label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Allow Stitch</div>
-              </div>
-              <div class="row-control">
-                <label class="toggle">
-                  <input type="checkbox" id="allowStitchToggle" checked />
-                  <span class="track"><span class="thumb"></span></span>
-                </label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">AI-generated content</div>
-                <div class="row-sub">Disclose if the video uses generative AI.</div>
-              </div>
-              <div class="row-control">
-                <label class="toggle">
-                  <input type="checkbox" id="aiContentToggle" />
-                  <span class="track"><span class="thumb"></span></span>
-                </label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Run a brand promotion</div>
-                <div class="row-sub">Required if it's an ad or paid partnership.</div>
-              </div>
-              <div class="row-control">
-                <label class="toggle">
-                  <input type="checkbox" id="brandedToggle" />
-                  <span class="track"><span class="thumb"></span></span>
-                </label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Schedule reminder</div>
-                <div class="row-sub" id="scheduleHint">Off  -  post now.</div>
-              </div>
-              <div class="row-control">
-                <input type="datetime-local" class="input" id="scheduleInput" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="post-action-bar">
-          <div class="post-flow">
-            <div class="flow-step"><span class="flow-num">1</span> Attaches video silently</div>
-            <div class="flow-arrow">→</div>
-            <div class="flow-step"><span class="flow-num">2</span> Pre-fills caption &amp; options</div>
-            <div class="flow-arrow">→</div>
-            <div class="flow-step"><span class="flow-num">3</span> Posts automatically</div>
-          </div>
-
-          <div class="upload-progress" id="uploadProgress" hidden>
-            <div class="up-bar"><div class="up-fill" id="uploadFill"></div></div>
-            <div class="up-stage" id="uploadStage">Starting…</div>
-          </div>
-
-          <div class="post-action-buttons">
-            <label class="quick-toggle">
-              <input type="checkbox" id="autoPostToggle" checked />
-              <span>Auto-post when ready</span>
-            </label>
-            <button class="secondary" id="copyCaptionBtn">Copy caption</button>
-            <button class="primary" id="uploadBtn">
-              <span class="btn-glow"></span>
-              <span class="btn-label">Upload to TikTok</span>
-            </button>
-          </div>
-          <div class="post-status" id="postStatus"></div>
-        </div>
-      </section>
-
-      <!-- ═══ Settings view ═══════════════════════════════════════════ -->
-      <section class="view" data-view="settings">
-        <header class="view-head">
-          <h1>Settings</h1>
-          <p class="view-sub">Configure how Upload120 patches and posts.</p>
-        </header>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Multiplier</div>
-          <div class="settings-card">
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">FPS multiplier</div>
-                <div class="row-sub" id="multiplierHint">4×  -  120 fps source becomes 480 fps apparent.</div>
-              </div>
-              <div class="row-control">
-                <div class="seg-control" id="segMultiplier">
-                  <button class="seg" data-divider="2">2×</button>
-                  <button class="seg" data-divider="3">3×</button>
-                  <button class="seg active" data-divider="4">4×</button>
-                  <button class="seg" data-divider="auto">Auto</button>
-                </div>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Custom multiplier</div>
-                <div class="row-sub">Use a value from 2 to 16. Higher exaggerates the effect.</div>
-              </div>
-              <div class="row-control">
-                <div class="stepper">
-                  <button class="step-btn" id="stepMinus">-</button>
-                  <input type="number" id="customDivider" min="2" max="16" step="1" value="4" />
-                  <button class="step-btn" id="stepPlus">+</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Output</div>
-          <div class="settings-card">
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Save location</div>
-                <div class="row-sub" id="outputHint">Same folder as the source.</div>
-              </div>
-              <div class="row-control">
-                <select id="outputMode" class="select">
-                  <option value="suffix">Same folder · add suffix</option>
-                  <option value="folder">Choose a folder…</option>
-                  <option value="ask">Ask for each file</option>
-                </select>
-              </div>
-            </div>
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Filename suffix</div>
-                <div class="row-sub">Appended before the extension.</div>
-              </div>
-              <div class="row-control">
-                <input type="text" id="suffix" class="input mono" value="_120fps" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Notifications</div>
-          <div class="settings-card">
-            <div class="row">
-              <div class="row-main">
-                <div class="row-title">Notify when done</div>
-                <div class="row-sub">A system notification fires after each batch finishes.</div>
-              </div>
-              <div class="row-control">
-                <label class="toggle">
-                  <input type="checkbox" id="notifyToggle" checked />
-                  <span class="track"><span class="thumb"></span></span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Recent</div>
-          <div class="settings-card">
-            <div class="history" id="history"></div>
-            <div class="row row-action">
-              <button class="ghost-btn danger" id="clearHistoryBtn">Clear history</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Reset</div>
-          <div class="settings-card">
-            <div class="row row-action">
-              <button class="ghost-btn danger" id="resetAllBtn">Reset all settings</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ═══ About view ══════════════════════════════════════════════ -->
-      <section class="view" data-view="about">
-        <header class="view-head">
-          <h1>About</h1>
-          <p class="view-sub">Patch and post your high-FPS videos in one place.</p>
-        </header>
-
-        <div class="about-hero">
-          <div class="about-icon">
-            <svg viewBox="0 0 64 64" width="92" height="92" aria-hidden="true">
-              <defs>
-                <linearGradient id="agrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#7B5CFF"/>
-                  <stop offset="55%" stop-color="#3D7BFF"/>
-                  <stop offset="100%" stop-color="#00C2FF"/>
-                </linearGradient>
-              </defs>
-              <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#agrad)"/>
-              <path d="M22 22 L36 32 L22 42 Z" fill="white" opacity="0.30"/>
-              <path d="M30 22 L44 32 L30 42 Z" fill="white"/>
-            </svg>
-          </div>
+      <section class="control-panel">
+        <div class="panel-head">
           <div>
-            <h2 class="about-name">Upload120</h2>
-            <div class="about-version" id="aboutVersion">Version 1.0</div>
-            <div class="about-author">Made by <a href="#" data-link="https://jxffx.com">jx</a></div>
+            <p class="label">Multiplier</p>
+            <h3 id="multiplierHint">4x. 120 fps source becomes 480 fps apparent.</h3>
           </div>
         </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">How it works</div>
-          <div class="settings-card prose">
-            <p>Upload120 rewrites two metadata fields inside an MP4  -  <span class="mono">mvhd</span> (movie header) and <span class="mono">mdhd</span> (media header)  -  so the upload pipeline reads the timeline as if the source were standard 30 fps. Your real frames stay untouched, only the timescale and duration values are divided by your chosen multiplier.</p>
-            <p>For best results: source video should be a fixed-rate MP4 at 60 or 120 fps, and the patched file <strong>must be uploaded from a computer</strong>. Phone uploads re-encode and undo the trick.</p>
+        <div class="settings-card flush">
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">FPS multiplier</div>
+              <div class="row-sub">Choose a fixed value or let Upload120 estimate per file.</div>
+            </div>
+            <div class="row-control">
+              <div class="seg-control" id="segMultiplier">
+                <button class="seg" type="button" data-divider="2">2x</button>
+                <button class="seg" type="button" data-divider="3">3x</button>
+                <button class="seg active" type="button" data-divider="4">4x</button>
+                <button class="seg" type="button" data-divider="auto">Auto</button>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Why this also gives better quality</div>
-          <div class="settings-card prose">
-            <p>The neat side-effect: your video usually looks <em>sharper</em> after this method, not just smoother. Three things stack up.</p>
-            <p><strong>1. Higher per-frame bitrate.</strong> TikTok's encoder picks a bitrate budget per second of apparent video. A "30 fps × 4 s" clip gets the standard 30-fps budget, but it's distributed across 4× as many real frames. Effective per-frame bitrate goes up  -  less blocking, less banding, more detail preserved.</p>
-            <p><strong>2. Softer compression path.</strong> TikTok routes high-FPS sources through an aggressive temporal-smoothing pipeline that drops, blends, or hard-rounds frames. With the metadata reading as 30 fps, the file skips that pipeline. The original frames pass through closer to source.</p>
-            <p><strong>3. Reduced motion-quantisation.</strong> Encoders allocate fewer bits to predicted frames in fast motion. Apparent slow motion (lower fps) means motion vectors look "calmer"  -  quantisation stays gentle, edges stay clean.</p>
-            <p class="muted">Net result: real 60/120 fps motion <em>plus</em> a noticeably crisper image versus a normal upload. The bigger the source frame rate, the bigger the win.</p>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Why a desktop upload</div>
-          <div class="settings-card prose">
-            <p>The TikTok mobile app forces a stricter re-encode pipeline that always lands at 30 fps regardless of metadata. The web upload path is more permissive and reads the rewritten timescale, which is what lets your original 60/120 fps frames pass through to playback. Upload120 talks to that same web pipeline directly  -  the file goes in through the desktop path even though you posted from this app.</p>
-          </div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-group-title">Credits</div>
-          <div class="settings-card prose">
-            <p>Made by <a href="#" data-link="https://jxffx.com">jx</a> · <a href="#" data-link="https://jxffx.com">jxffx.com</a></p>
-            <p>Inspired by the original <a href="#" data-link="https://github.com/ut0ku/120fps-method">120fps-method</a> by ut0ku. Reimplemented from scratch with a proper atom-tree parser, batch processing, a hashtag library, and a refined interface.</p>
-            <p class="muted">Everything runs locally on your computer. No uploads, no telemetry, no data leaves the app.</p>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Custom multiplier</div>
+              <div class="row-sub">Use a value from 2 to 16.</div>
+            </div>
+            <div class="row-control">
+              <div class="stepper">
+                <button class="step-btn" id="stepMinus" type="button">-</button>
+                <input type="number" id="customDivider" min="2" max="16" step="1" value="4" />
+                <button class="step-btn" id="stepPlus" type="button">+</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
-    </main>
-  </div>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Output</p>
+            <h3 id="outputHint">Same folder as the source.</h3>
+          </div>
+        </div>
+        <div class="settings-card flush">
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Save location</div>
+              <div class="row-sub">Choose how patched files are saved.</div>
+            </div>
+            <div class="row-control">
+              <select id="outputMode" class="select">
+                <option value="suffix">Same folder, add suffix</option>
+                <option value="folder">Choose a folder...</option>
+                <option value="ask">Ask for each file</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Filename suffix</div>
+              <div class="row-sub">Added before the file extension.</div>
+            </div>
+            <div class="row-control">
+              <input type="text" id="suffix" class="input mono" value="_120fps" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="row-main">
+              <div class="row-title">Notify when done</div>
+              <div class="row-sub">Show a system notification after each batch.</div>
+            </div>
+            <div class="row-control"><label class="toggle"><input type="checkbox" id="notifyToggle" checked /><span class="track"><span class="thumb"></span></span></label></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Recent</p>
+            <h3>Patched files</h3>
+          </div>
+          <button class="ghost-btn danger" id="clearHistoryBtn" type="button">Clear history</button>
+        </div>
+        <div class="history" id="history"></div>
+      </section>
+
+      <section class="control-panel">
+        <div class="panel-head">
+          <div>
+            <p class="label">Reset</p>
+            <h3>Clear local app state.</h3>
+          </div>
+          <button class="ghost-btn danger" id="resetAllBtn" type="button">Reset all settings</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="view page-shell" data-view="about" id="about">
+      <div class="section-copy">
+        <p class="eyebrow">About</p>
+        <h2>Local-only desktop companion for Upload120.</h2>
+        <p>Upload120 patches timing metadata and can post through TikTok's desktop web pipeline without sending files anywhere else.</p>
+      </div>
+
+      <div class="about-hero">
+        <span class="mark large" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="72" height="72">
+            <rect x="2" y="2" width="60" height="60" rx="15" fill="#111" />
+            <path d="M23 19l22 13-22 13V19z" fill="#fff" />
+          </svg>
+        </span>
+        <div>
+          <h2 class="about-name">Upload120</h2>
+          <div class="about-version" id="aboutVersion">Version</div>
+          <div class="about-author">Made by <a href="#" data-link="https://jxffx.com">jx</a></div>
+        </div>
+      </div>
+
+      <div class="details-grid">
+        <article>
+          <span>mvhd</span>
+          <h3>Movie timing</h3>
+          <p>Updates the global timescale and duration fields used by the container.</p>
+        </article>
+        <article>
+          <span>mdhd</span>
+          <h3>Track timing</h3>
+          <p>Updates timing fields on each media track so the file stays internally consistent.</p>
+        </article>
+        <article>
+          <span>stts</span>
+          <h3>FPS estimate</h3>
+          <p>Reads sample deltas to estimate the source frame rate before patching.</p>
+        </article>
+      </div>
+
+      <section class="control-panel prose">
+        <p>Upload120 rewrites two metadata fields inside an MP4, <span class="mono">mvhd</span> and <span class="mono">mdhd</span>, so the upload pipeline reads the timeline as if the source were standard 30 fps. Your real frames stay untouched.</p>
+        <p>For best results, use a fixed-rate MP4 at 60 or 120 fps and upload the patched file from a computer. Phone uploads re-encode and undo the trick.</p>
+        <p class="muted">Everything runs locally on your computer. No uploads, no telemetry, no data leaves the app.</p>
+      </section>
+    </section>
+  </main>
 
   <div class="drag-overlay" id="dragOverlay">
     <div class="drag-card">
       <h2>Drop to add</h2>
-      <p>MP4 · MOV · M4V</p>
+      <p>MP4, MOV, or M4V</p>
     </div>
   </div>
 

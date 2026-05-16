@@ -25,7 +25,7 @@ function createWindow() {
     trafficLightPosition: { x: 18, y: 20 },
     vibrancy: 'under-window',
     visualEffectState: 'active',
-    backgroundColor: '#0a0b10',
+    backgroundColor: '#f5f5f7',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -97,7 +97,7 @@ function markFirstRunComplete() {
 app.whenReady().then(() => {
   createWindow();
   buildMenu();
-  nativeTheme.themeSource = 'dark';
+  nativeTheme.themeSource = 'light';
   markFirstRunComplete();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

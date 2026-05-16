@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Upload120 patches MP4 timing metadata locally in your browser." />
+  <title>Upload120 Web</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#patch" aria-label="Upload120 home">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 36 36" width="36" height="36">
+          <rect x="1" y="1" width="34" height="34" rx="9" fill="#111" />
+          <path d="M13 11l12 7-12 7V11z" fill="#fff" />
+        </svg>
+      </span>
+      <span>Upload120</span>
+    </a>
+
+    <nav class="nav" aria-label="Page sections">
+      <a class="nav-item active" href="#patch" data-nav="patch">Patch</a>
+      <a class="nav-item" href="#how" data-nav="how">How it works</a>
+      <a class="nav-item" href="#settings" data-nav="settings">Settings</a>
+      <a class="nav-item" href="#about" data-nav="about">About</a>
+    </nav>
+
+    <a class="top-link" href="source/">Source</a>
+  </header>
+
+  <main>
+    <section class="hero-shell" id="patch">
+      <div class="intro">
+        <p class="eyebrow">Local MP4 patcher</p>
+        <h1>High-FPS metadata, patched privately.</h1>
+        <p class="lead">Upload120 updates MP4 timing headers in your browser. Your video stays on this device, and the actual frames are left untouched.</p>
+      </div>
+
+      <div class="patcher">
+        <div class="dropzone" id="dropzone">
+          <div class="dz-content">
+            <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden="true" class="dz-icon">
+              <path d="M12 4v10M8 8l4-4 4 4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5 15v3.2A1.8 1.8 0 006.8 20h10.4a1.8 1.8 0 001.8-1.8V15" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+            </svg>
+            <h2>Drop video files here</h2>
+            <p><button class="link-btn" id="browseBtn" type="button">Choose files</button> or drag in MP4, MOV, or M4V videos.</p>
+            <input id="fileInput" type="file" accept=".mp4,.mov,.m4v,video/mp4,video/quicktime" multiple hidden />
+          </div>
+        </div>
+
+        <div class="notice">For the best result, upload the patched file from a desktop browser. Mobile apps may re-encode the video.</div>
+
+        <section class="control-panel" aria-labelledby="multiplierTitle">
+          <div class="panel-head">
+            <div>
+              <p class="label">Multiplier</p>
+              <h3 id="multiplierTitle">Choose the same timing patch used by the app.</h3>
+            </div>
+            <span class="hint" id="modeHint">Auto picks 2x for 60 fps, 3x for 90, 4x for 120+</span>
+          </div>
+
+          <div class="multiplier-row" id="multiplierRow" role="radiogroup" aria-label="FPS multiplier">
+            <button class="mult-card active" type="button" data-mode="auto" role="radio" aria-checked="true">
+              <span class="mult-num auto">Auto</span>
+              <span class="mult-result">2x for 60, 3x for 90, 4x for 120+</span>
+            </button>
+            <button class="mult-card" type="button" data-mode="2" role="radio" aria-checked="false">
+              <span class="mult-num">2x</span>
+              <span class="mult-result">60 to 120, 120 to 240</span>
+            </button>
+            <button class="mult-card" type="button" data-mode="4" role="radio" aria-checked="false">
+              <span class="mult-num">4x</span>
+              <span class="mult-result">App default preset</span>
+            </button>
+            <label class="mult-card custom-card" data-mode="custom">
+              <span class="mult-num">Custom</span>
+              <span class="custom-line"><input id="customMultiplier" type="number" min="2" max="16" step="1" value="2" />x multiplier</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="control-panel queue-card" aria-labelledby="queueTitle">
+          <div class="panel-head">
+            <div>
+              <p class="label">Queue</p>
+              <h3 id="queueTitle">Ready files appear here.</h3>
+            </div>
+            <div class="queue-actions">
+              <button class="ghost-btn" id="clearQueueBtn" type="button">Clear</button>
+              <button class="primary small" id="processBtn" type="button" disabled>Process</button>
+            </div>
+          </div>
+          <div class="queue" id="queue" aria-live="polite">
+            <div class="queue-empty">No files yet. Drop a video above.</div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <div class="section-copy">
+        <p class="eyebrow">How it works</p>
+        <h2>Only the timing metadata changes.</h2>
+        <p>Upload120 inspects the MP4 structure, estimates video FPS from sample timing, and rewrites movie and media timing headers. It does not create new frames or alter image quality.</p>
+      </div>
+      <div class="details-grid">
+        <article>
+          <span>mvhd</span>
+          <h3>Movie timing</h3>
+          <p>Updates the global timescale and duration fields used by the container.</p>
+        </article>
+        <article>
+          <span>mdhd</span>
+          <h3>Track timing</h3>
+          <p>Updates timing fields on each media track so the file stays internally consistent.</p>
+        </article>
+        <article>
+          <span>stts</span>
+          <h3>FPS estimate</h3>
+          <p>Reads sample deltas to estimate the source frame rate before patching.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section compact" id="settings">
+      <div class="section-copy">
+        <p class="eyebrow">Settings</p>
+        <h2>Output preferences</h2>
+      </div>
+      <div class="settings-grid">
+        <label class="setting-row">
+          <span><strong>Filename suffix</strong><small>Added before the file extension.</small></span>
+          <input id="suffixInput" type="text" value="_patch" />
+        </label>
+        <label class="setting-row check-row">
+          <span><strong>Download automatically</strong><small>Start each download when processing finishes.</small></span>
+          <input id="autoDownloadInput" type="checkbox" />
+        </label>
+      </div>
+    </section>
+
+    <section class="section compact" id="about">
+      <div class="section-copy">
+        <p class="eyebrow">About</p>
+        <h2>Local-only web companion for Upload120.</h2>
+        <p>The web version focuses on patching files in the browser. For source code and desktop releases, use the project links.</p>
+      </div>
+      <div class="link-grid">
+        <a href="source/">Source code</a>
+        <a href="app/">App download</a>
+        <a href="https://jxffx.com" target="_blank" rel="noopener">jxffx.com</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="patcher.browser.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

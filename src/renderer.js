@@ -174,6 +174,7 @@ function showView(name) {
   if (name === 'post') refreshTikTokStatus();
 }
 $$('.nav-item').forEach(n => n.addEventListener('click', () => showView(n.dataset.view)));
+$$('.brand[data-view]').forEach(n => n.addEventListener('click', () => showView(n.dataset.view)));
 
 // ═══ Patch: Queue ═════════════════════════════════════════════════════════
 

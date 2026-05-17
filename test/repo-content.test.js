@@ -67,3 +67,13 @@ test('public website does not promote the desktop app as the current product', (
   assert.doesNotMatch(readme, /npm run dev/i);
   assert.doesNotMatch(readme, /electron/i);
 });
+
+test('website explains method differences in plain language', () => {
+  const home = readText('docs/index.html');
+  const readme = readText('README.md');
+
+  assert.match(home, /Extension Signal/i);
+  assert.match(home, /does not change playback speed/i);
+  assert.match(home, /Old hard patch/i);
+  assert.match(readme, /Extension Signal/i);
+});

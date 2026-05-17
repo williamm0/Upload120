@@ -85,6 +85,7 @@ function buildDocument() {
   const ids = new Map();
   const methodButtons = [
     new FakeElement({ tag: 'button', dataset: { method: 'balanced-sync' }, classes: ['method-card', 'active'] }),
+    new FakeElement({ tag: 'button', dataset: { method: 'extension-signal' }, classes: ['method-card'] }),
     new FakeElement({ tag: 'button', dataset: { method: 'header-lite' }, classes: ['method-card'] }),
     new FakeElement({ tag: 'button', dataset: { method: 'classic-force' }, classes: ['method-card'] })
   ];
@@ -184,5 +185,6 @@ test('website queue captures the selected local method for new files', async () 
 
   await new Promise(resolve => setImmediate(resolve));
 
-  assert.match(document.ids.get('queue').innerHTML, /Header Lite/);
+  assert.match(document.ids.get('queue').innerHTML, /Extension Signal/);
+  assert.match(document.ids.get('queue').innerHTML, /No timing change/);
 });

@@ -9,7 +9,7 @@ Upload120 is now a website-only tool. Drop an MP4, MOV, or M4V file into the sta
 ## Current Website
 
 - **Local processing** - all patching runs in the browser.
-- **Multiple methods** - Balanced Sync, Header Lite, and Classic Force.
+- **Multiple methods** - Balanced Sync, Extension Signal, Header Lite, and Classic Force.
 - **Batch queue** - add multiple files and process them from one page.
 - **Auto multiplier** - pick timing strength automatically from the detected FPS.
 - **No install** - open `docs/index.html` directly or host the `docs/` folder as a static site.
@@ -57,7 +57,7 @@ The tests cover the browser patcher and website wiring. There is no native app b
 
 Made by [jx](https://jxffx.com) · [jxffx.com](https://jxffx.com)
 
-Inspired by public MP4 container research and community upload-method work, including [120fps-method](https://github.com/ut0ku/120fps-method).
+Inspired by public MP4 container research and community upload-method work, including [120fps-method](https://github.com/ut0ku/120fps-method), [Kryp](https://kryptools.org/), [Maska](https://addons.mozilla.org/en-US/firefox/addon/maska-tiktok-upload-method/), [itzCrih](https://method.itzcrih.it/), and [Qualitymax](https://www.qualitymax.org/).
 
 ---
 

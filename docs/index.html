@@ -58,21 +58,25 @@
               <p class="label">Method</p>
               <h3 id="methodTitle">Pick a local patch recipe.</h3>
             </div>
-            <span class="hint" id="methodHint">Recommended for normal desktop preview.</span>
+            <span class="hint" id="methodHint">Best first try for upload strength and desktop preview.</span>
           </div>
 
           <div class="method-row" id="methodRow" role="radiogroup" aria-label="Local patch method">
             <button class="method-card active" type="button" data-method="balanced-sync" role="radio" aria-checked="true">
               <span class="method-top"><span class="method-name">Balanced Sync</span><span class="method-tag">Best</span></span>
-              <span class="method-copy">Timing patch with an edit-list speed guard for players that honor desktop preview timing.</span>
+              <span class="method-copy">Best first try. Changes timing, then adds a guard so computer previews are less likely to slow down.</span>
+            </button>
+            <button class="method-card" type="button" data-method="extension-signal" role="radio" aria-checked="false">
+              <span class="method-top"><span class="method-name">Extension Signal</span><span class="method-tag quiet">No slowdown</span></span>
+              <span class="method-copy">Does not change playback speed. Adds a neutral edit-list signal and iTunes-style tags only.</span>
             </button>
             <button class="method-card" type="button" data-method="header-lite" role="radio" aria-checked="false">
               <span class="method-top"><span class="method-name">Header Lite</span><span class="method-tag quiet">Safe preview</span></span>
-              <span class="method-copy">Movie-header-only variant. It keeps media timing closer to source, but the upload effect may be weaker.</span>
+              <span class="method-copy">Gentle timing change. Touches the outer movie header, but leaves video track timing alone.</span>
             </button>
             <button class="method-card" type="button" data-method="classic-force" role="radio" aria-checked="false">
               <span class="method-top"><span class="method-name">Classic Force</span><span class="method-tag warn">Legacy</span></span>
-              <span class="method-copy">Original mvhd/mdhd timing patch. Strongest legacy path, but desktop playback can appear slow.</span>
+              <span class="method-copy">Old hard patch. Strong legacy timing change, but desktop playback can look slow.</span>
             </button>
           </div>
         </section>
@@ -132,19 +136,24 @@
       </div>
       <div class="details-grid">
         <article>
-          <span>elst</span>
+          <span>timing + elst</span>
           <h3>Balanced Sync</h3>
-          <p>Adds an edit-list speed guard around the timing patch so desktop players that honor edit lists can preview closer to normal speed.</p>
+          <p>Changes the main timing headers, then adds a speed guard. Use this first when you want a stronger patch but do not want the old desktop slowdown behavior.</p>
+        </article>
+        <article>
+          <span>elst + tags</span>
+          <h3>Extension Signal</h3>
+          <p>Adds a normal-speed edit list and iTunes-style metadata. It does not change playback speed, so the file should preview normally on a computer.</p>
         </article>
         <article>
           <span>mvhd</span>
           <h3>Header Lite</h3>
-          <p>Changes the movie-level timing header and adds a local metadata marker while leaving media sample timing untouched.</p>
+          <p>Changes only the outer movie timing. It is easier on desktop players than the old method, but the upload signal is also lighter.</p>
         </article>
         <article>
           <span>mdhd</span>
           <h3>Classic Force</h3>
-          <p>Uses the original movie and media header patch for the strongest legacy compatibility path.</p>
+          <p>Changes both movie and video track timing like the original open-source patchers. It can be useful as a fallback, but computer playback can look slow.</p>
         </article>
       </div>
     </section>

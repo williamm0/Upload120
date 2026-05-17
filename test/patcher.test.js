@@ -6,7 +6,7 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
-const CONTAINER_BOXES = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'edts', 'udta']);
+const CONTAINER_BOXES = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'edts', 'udta', 'meta']);
 
 function loadWebsitePatcher() {
   const browserSource = fs.readFileSync(path.join(__dirname, '..', 'docs', 'patcher.browser.js'), 'utf8');
@@ -24,6 +24,7 @@ function loadWebsitePatcher() {
     RegExp,
     Set,
     String,
+    TextEncoder,
     TypeError,
     Uint8Array
   };
@@ -82,25 +83,35 @@ function stco(offset) {
   return fullBox('stco', payload);
 }
 
-function makeMoov(chunkOffset) {
+function elst(rate = 1) {
+  const payload = Buffer.alloc(16);
+  payload.writeUInt32BE(1, 0);
+  payload.writeUInt32BE(120, 4);
+  payload.writeInt32BE(0, 8);
+  payload.writeInt16BE(rate, 12);
+  payload.writeUInt16BE(0, 14);
+  return fullBox('elst', payload);
+}
+
+function makeMoov(chunkOffset, { includeEditList = false } = {}) {
   const stbl = box('stbl', stts(120, 1), stco(chunkOffset));
   const minf = box('minf', stbl);
   const mdia = box('mdia', mdhd(120, 120), hdlr('vide'), minf);
-  const trak = box('trak', mdia);
+  const trak = box('trak', ...(includeEditList ? [box('edts', elst())] : []), mdia);
   return box('moov', mvhd(120, 120), trak);
 }
 
-function makeSampleMp4() {
+function makeSampleMp4(options = {}) {
   const ftyp = box('ftyp', Buffer.from([
     0x69, 0x73, 0x6f, 0x6d,
     0x00, 0x00, 0x00, 0x01,
     0x69, 0x73, 0x6f, 0x6d,
     0x69, 0x73, 0x6f, 0x32
   ]));
-  const placeholderMoov = makeMoov(0);
+  const placeholderMoov = makeMoov(0, options);
   const mdat = box('mdat', Buffer.alloc(16, 1));
   const mediaOffset = ftyp.length + placeholderMoov.length + 8;
-  const moov = makeMoov(mediaOffset);
+  const moov = makeMoov(mediaOffset, options);
   return Buffer.concat([ftyp, moov, mdat]);
 }
 
@@ -122,7 +133,7 @@ function walkBoxes(buf, start = 0, end = buf.length) {
     const current = { type, start: pos, contentStart: pos + 8, end: pos + size };
     boxes.push(current);
     if (CONTAINER_BOXES.has(type)) {
-      boxes.push(...walkBoxes(buf, current.contentStart, current.end));
+      boxes.push(...walkBoxes(buf, type === 'meta' ? current.contentStart + 4 : current.contentStart, current.end));
     }
     pos += size;
   }
@@ -155,6 +166,10 @@ function readMdhdTimescale(buf) {
 function readElstRateInteger(buf) {
   const editList = findBox(buf, 'elst');
   return editList ? buf.readInt16BE(editList.contentStart + 16) : 0;
+}
+
+function hasUtf8(buf, value) {
+  return buf.includes(Buffer.from(value, 'utf8'));
 }
 
 function outputBuffer(result) {
@@ -212,12 +227,34 @@ test('balanced-sync adds an edit list speed guard and shifts media offsets', () 
   assert.equal(firstChunkOffset(output), originalOffset + (output.length - source.length));
 });
 
+test('extension-signal keeps desktop timing normal while adding elst and iTunes metadata', () => {
+  const { patchMp4Buffer } = loadWebsitePatcher();
+  const source = makeSampleMp4();
+  const originalOffset = firstChunkOffset(source);
+  const result = patchMp4Buffer(source, { method: 'extension-signal', divider: 4 });
+  const output = outputBuffer(result);
+
+  assert.equal(result.method, 'extension-signal');
+  assert.equal(result.mvhdCount, 0);
+  assert.equal(result.mdhdCount, 0);
+  assert.equal(result.elstCount, 1);
+  assert.equal(result.metadataCount, 2);
+  assert.equal(readMvhdTimescale(output), 120);
+  assert.equal(readMdhdTimescale(output), 120);
+  assert.equal(readElstRateInteger(output), 1);
+  assert.equal(findBoxes(output, 'meta').length, 1);
+  assert.equal(findBoxes(output, 'ilst').length, 1);
+  assert.equal(findBoxes(output, 'u120').length, 1);
+  assert.equal(hasUtf8(output, 'Extension Signal'), true);
+  assert.equal(firstChunkOffset(output), originalOffset + (output.length - source.length));
+});
+
 test('browser patcher exposes the same public method ids as the Node patcher', () => {
   const patcher = loadWebsitePatcher();
   const methodIds = Array.from(patcher.METHODS, method => method.id);
   assert.deepEqual(
     methodIds,
-    ['balanced-sync', 'header-lite', 'classic-force']
+    ['balanced-sync', 'extension-signal', 'header-lite', 'classic-force']
   );
 });
 

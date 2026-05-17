@@ -20,15 +20,23 @@
   const methodCopy = {
     'balanced-sync': {
       name: 'Balanced Sync',
-      hint: 'Recommended for normal desktop preview.'
+      hint: 'Best first try for upload strength and desktop preview.',
+      changesTiming: true
+    },
+    'extension-signal': {
+      name: 'Extension Signal',
+      hint: 'No timing change; normal-speed desktop playback.',
+      changesTiming: false
     },
     'header-lite': {
       name: 'Header Lite',
-      hint: 'Safest local preview, weaker upload effect.'
+      hint: 'Gentle timing change; lighter upload signal.',
+      changesTiming: true
     },
     'classic-force': {
       name: 'Classic Force',
-      hint: 'Legacy behavior; desktop playback can look slow.'
+      hint: 'Old hard patch; desktop playback can look slow.',
+      changesTiming: true
     }
   };
 
@@ -80,6 +88,11 @@
     return item.info?.fps ? item.info.fps * item.divider : 0;
   }
 
+  function outputFpsLabel(item) {
+    if (methodCopy[item.method]?.changesTiming === false) return 'No timing change';
+    return formatFps(effectiveFps(item));
+  }
+
   function outputName(name) {
     const suffix = suffixInput.value.trim() || '_patch';
     const dot = name.lastIndexOf('.');
@@ -118,7 +131,7 @@
           <div><div class="metric-label">Method</div><div class="metric-value">${escapeHtml(methodLabel(item.method))}</div></div>
           <div><div class="metric-label">Detected FPS</div><div class="metric-value">${formatFps(info.fps)}</div></div>
           <div><div class="metric-label">Mode</div><div class="metric-value">${modeLabel(item)}</div></div>
-          <div><div class="metric-label">Output FPS</div><div class="metric-value">${formatFps(effectiveFps(item))}</div></div>
+          <div><div class="metric-label">Output FPS</div><div class="metric-value">${escapeHtml(outputFpsLabel(item))}</div></div>
           <div><div class="metric-label">Resolution</div><div class="metric-value">${resolution}</div></div>
           <div><div class="metric-label">Status</div><div class="status-pill ${statusClass}">${escapeHtml(item.message || item.status)}</div>${warningLine}</div>
           <div>${download}</div>

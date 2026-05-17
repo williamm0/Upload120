@@ -9,21 +9,60 @@
     {
       id: 'balanced-sync',
       name: 'Balanced Sync',
-      description: 'Adds an edit-list speed guard around the timing patch for better desktop preview behavior.'
+      description: 'Best first try: timing patch plus a speed guard for steadier desktop preview.'
+    },
+    {
+      id: 'extension-signal',
+      name: 'Extension Signal',
+      description: 'Adds a neutral edit list and iTunes-style metadata without changing playback speed.'
     },
     {
       id: 'header-lite',
       name: 'Header Lite',
-      description: 'Patches movie timing only and leaves media sample timing untouched.'
+      description: 'Gentle timing patch: changes the movie header only.'
     },
     {
       id: 'classic-force',
       name: 'Classic Force',
-      description: 'Uses the original mvhd/mdhd patch for maximum compatibility with the legacy method.'
+      description: 'Old hard patch: original mvhd/mdhd timing behavior.'
     }
   ]);
 
   const METHOD_IDS = new Set(METHODS.map(method => method.id));
+  const METHOD_BEHAVIOR = Object.freeze({
+    'balanced-sync': {
+      patchMovieTiming: true,
+      patchMediaTiming: true,
+      editListMode: 'speed',
+      localMetadata: true,
+      itunesMetadata: false,
+      requireTiming: true
+    },
+    'extension-signal': {
+      patchMovieTiming: false,
+      patchMediaTiming: false,
+      editListMode: 'neutral',
+      localMetadata: true,
+      itunesMetadata: true,
+      requireTiming: false
+    },
+    'header-lite': {
+      patchMovieTiming: true,
+      patchMediaTiming: false,
+      editListMode: null,
+      localMetadata: true,
+      itunesMetadata: false,
+      requireTiming: true
+    },
+    'classic-force': {
+      patchMovieTiming: true,
+      patchMediaTiming: true,
+      editListMode: null,
+      localMetadata: false,
+      itunesMetadata: false,
+      requireTiming: true
+    }
+  });
 
   function asBytes(input) {
     if (input instanceof Uint8Array) return input;
@@ -360,23 +399,29 @@
     return out;
   }
 
+  function boxTypeBytes(type) {
+    if (typeof type === 'string') return stringBytes(type);
+    if (type instanceof Uint8Array && type.byteLength === 4) return type;
+    throw new Error('MP4 box type must be a four-character string or four bytes.');
+  }
+
   function makeBox(type, ...parts) {
     const payload = concatBytes(parts);
     const out = new Uint8Array(payload.byteLength + 8);
     const view = makeView(out);
     writeU32(view, 0, out.byteLength);
-    out.set(stringBytes(type), 4);
+    out.set(boxTypeBytes(type), 4);
     out.set(payload, 8);
     return out;
   }
 
-  function makeFullBox(type, version, flags, payload) {
+  function makeFullBox(type, version, flags, ...parts) {
     const header = new Uint8Array(4);
     header[0] = version & 0xFF;
     header[1] = (flags >> 16) & 0xFF;
     header[2] = (flags >> 8) & 0xFF;
     header[3] = flags & 0xFF;
-    return makeBox(type, header, payload);
+    return makeBox(type, header, ...parts);
   }
 
   function makeEditListBox(segmentDuration, divider) {
@@ -411,6 +456,37 @@
       divider,
       local: true
     })));
+  }
+
+  function makeDataBoxUtf8(value) {
+    const text = new TextEncoder().encode(value);
+    const payload = new Uint8Array(8 + text.byteLength);
+    const view = makeView(payload);
+    writeU32(view, 0, 1);
+    writeU32(view, 4, 0);
+    payload.set(text, 8);
+    return makeBox('data', payload);
+  }
+
+  function makeItunesItem(typeBytes, value) {
+    return makeBox(typeBytes, makeDataBoxUtf8(value));
+  }
+
+  function makeItunesMetadataBox(method, divider) {
+    const methodInfo = METHODS.find(item => item.id === method);
+    const methodName = methodInfo ? methodInfo.name : method;
+    const handlerPayload = new Uint8Array(21);
+    handlerPayload.set(stringBytes('mdir'), 4);
+    handlerPayload.set(stringBytes('appl'), 8);
+
+    const hdlr = makeFullBox('hdlr', 0, 0, handlerPayload);
+    const ilst = makeBox('ilst',
+      makeItunesItem(new Uint8Array([0xA9, 0x63, 0x6D, 0x74]), `${methodName} ${divider}x`),
+      makeItunesItem(new Uint8Array([0x61, 0x41, 0x52, 0x54]), 'Upload120'),
+      makeItunesItem(new Uint8Array([0xA9, 0x41, 0x52, 0x54]), 'Upload120')
+    );
+
+    return makeFullBox('meta', 0, 0, hdlr, ilst);
   }
 
   function patchMvhdInPlace(bytes, mvhd, divider) {
@@ -569,15 +645,44 @@
     return operations;
   }
 
-  function patchTimingFields(bytes, divider, patchMediaTiming) {
+  function collectItunesMetadataOperations(bytes, method, divider) {
+    const operations = [];
+
+    for (const moov of findBoxes(bytes, 'moov')) {
+      const meta = makeItunesMetadataBox(method, divider);
+      const udta = findChild(bytes, moov, 'udta');
+
+      if (udta) {
+        operations.push({
+          start: udta.contentEnd,
+          end: udta.contentEnd,
+          insert: meta,
+          ancestors: [moov.start, udta.start]
+        });
+      } else {
+        operations.push({
+          start: moov.contentEnd,
+          end: moov.contentEnd,
+          insert: makeBox('udta', meta),
+          ancestors: [moov.start]
+        });
+      }
+    }
+
+    return operations;
+  }
+
+  function patchTimingFields(bytes, divider, patchMovieTiming, patchMediaTiming) {
     let mvhdCount = 0;
     let mdhdCount = 0;
 
     for (const moov of findBoxes(bytes, 'moov')) {
-      const mvhd = findChild(bytes, moov, 'mvhd');
-      if (mvhd) {
-        patchMvhdInPlace(bytes, mvhd, divider);
-        mvhdCount++;
+      if (patchMovieTiming) {
+        const mvhd = findChild(bytes, moov, 'mvhd');
+        if (mvhd) {
+          patchMvhdInPlace(bytes, mvhd, divider);
+          mvhdCount++;
+        }
       }
 
       if (!patchMediaTiming) continue;
@@ -600,28 +705,43 @@
     const source = asBytes(input);
     let bytes = new Uint8Array(source.byteLength);
     bytes.set(source);
-    const patchMediaTiming = method !== 'header-lite';
+    const behavior = METHOD_BEHAVIOR[method];
     const warnings = [];
 
-    const { mvhdCount, mdhdCount } = patchTimingFields(bytes, divider, patchMediaTiming);
-    if (mvhdCount === 0 || (patchMediaTiming && mdhdCount === 0)) throw new Error('No mvhd/mdhd timing boxes were found to patch.');
+    const { mvhdCount, mdhdCount } = patchTimingFields(
+      bytes,
+      divider,
+      behavior.patchMovieTiming,
+      behavior.patchMediaTiming
+    );
+    if (behavior.requireTiming && (mvhdCount === 0 || (behavior.patchMediaTiming && mdhdCount === 0))) {
+      throw new Error('No mvhd/mdhd timing boxes were found to patch.');
+    }
 
     const operations = [];
     let elstCount = 0;
     let metadataCount = 0;
 
-    if (method === 'balanced-sync') {
-      const editLists = collectEditListOperations(bytes, divider);
+    if (behavior.editListMode) {
+      const editLists = collectEditListOperations(bytes, behavior.editListMode === 'neutral' ? 1 : divider);
       operations.push(...editLists.operations);
       elstCount = editLists.elstCount;
-      if (elstCount === 0) warnings.push('No tracks were available for an edit-list speed guard.');
+      if (elstCount === 0) warnings.push('No tracks were available for an edit-list signal.');
     }
 
-    if (method !== 'classic-force') {
+    if (behavior.localMetadata) {
       const metadataOps = collectMetadataOperations(bytes, method, divider);
       operations.push(...metadataOps);
-      metadataCount = metadataOps.length;
+      metadataCount += metadataOps.length;
     }
+
+    if (behavior.itunesMetadata) {
+      const itunesOps = collectItunesMetadataOperations(bytes, method, divider);
+      operations.push(...itunesOps);
+      metadataCount += itunesOps.length;
+    }
+
+    if (!behavior.requireTiming && operations.length === 0) throw new Error('No moov box was found to tag.');
 
     if (operations.length > 0) bytes = applyOperations(bytes, operations);
 

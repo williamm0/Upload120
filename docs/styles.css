@@ -300,7 +300,7 @@ small {
 }
 
 .method-row {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .multiplier-row {
@@ -550,7 +550,7 @@ small {
 }
 
 .details-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .details-grid article,
@@ -673,7 +673,7 @@ small {
   }
 
   .details-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .queue-row {

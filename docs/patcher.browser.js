@@ -5,6 +5,26 @@
     'moov', 'trak', 'mdia', 'minf', 'stbl', 'edts', 'udta', 'meta', 'dinf', 'moof', 'traf', 'mvex'
   ]);
 
+  const METHODS = Object.freeze([
+    {
+      id: 'balanced-sync',
+      name: 'Balanced Sync',
+      description: 'Adds an edit-list speed guard around the timing patch for better desktop preview behavior.'
+    },
+    {
+      id: 'header-lite',
+      name: 'Header Lite',
+      description: 'Patches movie timing only and leaves media sample timing untouched.'
+    },
+    {
+      id: 'classic-force',
+      name: 'Classic Force',
+      description: 'Uses the original mvhd/mdhd patch for maximum compatibility with the legacy method.'
+    }
+  ]);
+
+  const METHOD_IDS = new Set(METHODS.map(method => method.id));
+
   function asBytes(input) {
     if (input instanceof Uint8Array) return input;
     if (input instanceof ArrayBuffer) return new Uint8Array(input);
@@ -34,6 +54,14 @@
     const big = typeof value === 'bigint' ? value : BigInt(Math.floor(value));
     view.setUint32(off, Number((big >> 32n) & 0xFFFFFFFFn), false);
     view.setUint32(off + 4, Number(big & 0xFFFFFFFFn), false);
+  }
+
+  function writeI16(view, off, value) {
+    view.setInt16(off, value, false);
+  }
+
+  function writeU16(view, off, value) {
+    view.setUint16(off, value, false);
   }
 
   function fourcc(bytes, off) {
@@ -90,6 +118,15 @@
       if (box.type === type) return box;
     }
     return null;
+  }
+
+  function findDirectChildren(bytes, parent, type) {
+    const children = [];
+    const childStart = parent.type === 'meta' ? parent.contentStart + 4 : parent.contentStart;
+    for (const box of walkBoxes(bytes, childStart, parent.contentEnd)) {
+      if (box.type === type) children.push(box);
+    }
+    return children;
   }
 
   function findDescendant(bytes, parent, types) {
@@ -284,45 +321,322 @@
     return integer;
   }
 
-  // Match the desktop app: divide mvhd/mdhd timescale and duration by the selected
-  // divider. The UI calls this a multiplier because the output target is source FPS x divider.
-  function patchMp4Buffer(input, divider = 4) {
-    if (!Number.isFinite(divider) || divider < 1) throw new Error(`Invalid divider: ${divider}`);
-    const source = asBytes(input);
-    const bytes = new Uint8Array(source.byteLength);
-    bytes.set(source);
+  function normalizePatchOptions(options = 4) {
+    if (typeof options === 'number') {
+      if (!Number.isFinite(options) || options < 1) throw new Error(`Invalid divider: ${options}`);
+      return { divider: Math.max(1, Math.round(options)), method: 'classic-force' };
+    }
+
+    if (!options || typeof options !== 'object') {
+      throw new Error('Patch options must be a divider number or options object.');
+    }
+
+    const divider = Number(options.divider ?? 4);
+    if (!Number.isFinite(divider) || divider < 1) throw new Error(`Invalid divider: ${options.divider}`);
+
+    const method = options.method || 'balanced-sync';
+    if (!METHOD_IDS.has(method)) throw new Error(`Unknown patch method: ${method}`);
+
+    return {
+      divider: Math.max(1, Math.round(divider)),
+      method
+    };
+  }
+
+  function concatBytes(parts) {
+    const total = parts.reduce((sum, part) => sum + part.byteLength, 0);
+    const out = new Uint8Array(total);
+    let offset = 0;
+    for (const part of parts) {
+      out.set(part, offset);
+      offset += part.byteLength;
+    }
+    return out;
+  }
+
+  function stringBytes(value) {
+    const out = new Uint8Array(value.length);
+    for (let i = 0; i < value.length; i++) out[i] = value.charCodeAt(i) & 0xFF;
+    return out;
+  }
+
+  function makeBox(type, ...parts) {
+    const payload = concatBytes(parts);
+    const out = new Uint8Array(payload.byteLength + 8);
+    const view = makeView(out);
+    writeU32(view, 0, out.byteLength);
+    out.set(stringBytes(type), 4);
+    out.set(payload, 8);
+    return out;
+  }
+
+  function makeFullBox(type, version, flags, payload) {
+    const header = new Uint8Array(4);
+    header[0] = version & 0xFF;
+    header[1] = (flags >> 16) & 0xFF;
+    header[2] = (flags >> 8) & 0xFF;
+    header[3] = flags & 0xFF;
+    return makeBox(type, header, payload);
+  }
+
+  function makeEditListBox(segmentDuration, divider) {
+    const mediaRate = Math.max(1, Math.min(0x7FFF, Math.round(divider)));
+    const durationNumber = typeof segmentDuration === 'bigint' ? Number(segmentDuration) : segmentDuration;
+
+    if (typeof segmentDuration === 'bigint' || durationNumber > 0xFFFFFFFF) {
+      const payload = new Uint8Array(24);
+      const view = makeView(payload);
+      writeU32(view, 0, 1);
+      writeU64(view, 4, segmentDuration);
+      writeU64(view, 12, 0n);
+      writeI16(view, 20, mediaRate);
+      writeU16(view, 22, 0);
+      return makeFullBox('elst', 1, 0, payload);
+    }
+
+    const payload = new Uint8Array(16);
+    const view = makeView(payload);
+    writeU32(view, 0, 1);
+    writeU32(view, 4, checkedU32(durationNumber, 'elst segment duration', 0));
+    view.setInt32(8, 0, false);
+    writeI16(view, 12, mediaRate);
+    writeU16(view, 14, 0);
+    return makeFullBox('elst', 0, 0, payload);
+  }
+
+  function makeMetadataHintBox(method, divider) {
+    return makeBox('u120', stringBytes(JSON.stringify({
+      tool: 'Upload120',
+      method,
+      divider,
+      local: true
+    })));
+  }
+
+  function patchMvhdInPlace(bytes, mvhd, divider) {
     const view = makeView(bytes);
-    const moovs = findBoxes(bytes, 'moov');
+    const m = readMvhd(bytes, mvhd);
+    const newTimescale = checkedU32(Math.max(1, m.timescale / divider), 'mvhd timescale');
+    writeU32(view, m.timescaleOffset, newTimescale);
+
+    if (m.durationBytes === 4) {
+      const newDuration = checkedU32(m.duration / divider, 'mvhd duration', 0);
+      writeU32(view, m.durationOffset, newDuration);
+      return { timescale: newTimescale, duration: newDuration };
+    }
+
+    const newDuration = m.duration / BigInt(divider);
+    writeU64(view, m.durationOffset, newDuration);
+    return { timescale: newTimescale, duration: newDuration };
+  }
+
+  function patchMdhdInPlace(bytes, mdhd, divider) {
+    const view = makeView(bytes);
+    const m = readMdhd(bytes, mdhd);
+    const newTimescale = checkedU32(Math.max(1, m.timescale / divider), 'mdhd timescale');
+    writeU32(view, m.timescaleOffset, newTimescale);
+
+    if (m.durationBytes === 4) {
+      const newDuration = checkedU32(m.duration / divider, 'mdhd duration', 0);
+      writeU32(view, m.durationOffset, newDuration);
+      return { timescale: newTimescale, duration: newDuration };
+    }
+
+    const newDuration = m.duration / BigInt(divider);
+    writeU64(view, m.durationOffset, newDuration);
+    return { timescale: newTimescale, duration: newDuration };
+  }
+
+  function adjustChunkOffsets(bytes, threshold, delta) {
+    if (delta === 0) return;
+    const view = makeView(bytes);
+
+    for (const stco of findBoxes(bytes, 'stco')) {
+      const entryCount = readU32(view, stco.contentStart + 4);
+      const maxEntries = Math.floor((stco.contentEnd - (stco.contentStart + 8)) / 4);
+      for (let i = 0; i < Math.min(entryCount, maxEntries); i++) {
+        const offset = stco.contentStart + 8 + i * 4;
+        const value = readU32(view, offset);
+        if (value >= threshold) writeU32(view, offset, checkedU32(value + delta, 'stco chunk offset', 0));
+      }
+    }
+
+    for (const co64 of findBoxes(bytes, 'co64')) {
+      const entryCount = readU32(view, co64.contentStart + 4);
+      const maxEntries = Math.floor((co64.contentEnd - (co64.contentStart + 8)) / 8);
+      for (let i = 0; i < Math.min(entryCount, maxEntries); i++) {
+        const offset = co64.contentStart + 8 + i * 8;
+        const value = readU64(view, offset);
+        if (value >= BigInt(threshold)) writeU64(view, offset, value + BigInt(delta));
+      }
+    }
+  }
+
+  function applyOperations(bytes, operations) {
+    const sorted = [...operations].sort((a, b) => b.start - a.start);
+    let current = bytes;
+
+    for (const op of sorted) {
+      const replacedLength = op.end - op.start;
+      const delta = op.insert.byteLength - replacedLength;
+      current = concatBytes([current.slice(0, op.start), op.insert, current.slice(op.end)]);
+      const view = makeView(current);
+
+      for (const start of [...new Set(op.ancestors)]) {
+        const size = readU32(view, start);
+        if (size === 1) writeU64(view, start + 8, readU64(view, start + 8) + BigInt(delta));
+        else writeU32(view, start, checkedU32(size + delta, `${fourcc(current, start + 4)} box size`, 8));
+      }
+
+      adjustChunkOffsets(current, op.start, delta);
+    }
+
+    return current;
+  }
+
+  function collectEditListOperations(bytes, divider) {
+    const operations = [];
+    let elstCount = 0;
+
+    for (const moov of findBoxes(bytes, 'moov')) {
+      const mvhd = findChild(bytes, moov, 'mvhd');
+      if (!mvhd) continue;
+      const movie = readMvhd(bytes, mvhd);
+
+      for (const trak of findDirectChildren(bytes, moov, 'trak')) {
+        const elst = makeEditListBox(movie.duration, divider);
+        const edts = findChild(bytes, trak, 'edts');
+
+        if (edts) {
+          const existing = findChild(bytes, edts, 'elst');
+          if (existing) {
+            operations.push({
+              start: existing.start,
+              end: existing.end,
+              insert: elst,
+              ancestors: [moov.start, trak.start, edts.start]
+            });
+          } else {
+            operations.push({
+              start: edts.contentEnd,
+              end: edts.contentEnd,
+              insert: elst,
+              ancestors: [moov.start, trak.start, edts.start]
+            });
+          }
+        } else {
+          const tkhd = findChild(bytes, trak, 'tkhd');
+          const start = tkhd ? tkhd.end : trak.contentStart;
+          operations.push({
+            start,
+            end: start,
+            insert: makeBox('edts', elst),
+            ancestors: [moov.start, trak.start]
+          });
+        }
+
+        elstCount++;
+      }
+    }
+
+    return { operations, elstCount };
+  }
+
+  function collectMetadataOperations(bytes, method, divider) {
+    const operations = [];
+
+    for (const moov of findBoxes(bytes, 'moov')) {
+      const hint = makeMetadataHintBox(method, divider);
+      const udta = findChild(bytes, moov, 'udta');
+
+      if (udta) {
+        operations.push({
+          start: udta.contentEnd,
+          end: udta.contentEnd,
+          insert: hint,
+          ancestors: [moov.start, udta.start]
+        });
+      } else {
+        operations.push({
+          start: moov.contentEnd,
+          end: moov.contentEnd,
+          insert: makeBox('udta', hint),
+          ancestors: [moov.start]
+        });
+      }
+    }
+
+    return operations;
+  }
+
+  function patchTimingFields(bytes, divider, patchMediaTiming) {
     let mvhdCount = 0;
     let mdhdCount = 0;
-    const roundedDivider = Math.max(1, Math.round(divider));
 
-    for (const moov of moovs) {
+    for (const moov of findBoxes(bytes, 'moov')) {
       const mvhd = findChild(bytes, moov, 'mvhd');
       if (mvhd) {
-        const m = readMvhd(bytes, mvhd);
-        writeU32(view, m.timescaleOffset, checkedU32(Math.max(1, m.timescale / roundedDivider), 'mvhd timescale'));
-        if (m.durationBytes === 4) writeU32(view, m.durationOffset, checkedU32(m.duration / roundedDivider, 'mvhd duration', 0));
-        else writeU64(view, m.durationOffset, m.duration / BigInt(roundedDivider));
+        patchMvhdInPlace(bytes, mvhd, divider);
         mvhdCount++;
       }
 
-      for (const trak of walkBoxes(bytes, moov.contentStart, moov.contentEnd)) {
-        if (trak.type !== 'trak') continue;
+      if (!patchMediaTiming) continue;
+
+      for (const trak of findDirectChildren(bytes, moov, 'trak')) {
         const mdia = findChild(bytes, trak, 'mdia');
         const mdhd = mdia && findChild(bytes, mdia, 'mdhd');
         if (!mdhd) continue;
-        const m = readMdhd(bytes, mdhd);
-        writeU32(view, m.timescaleOffset, checkedU32(Math.max(1, m.timescale / roundedDivider), 'mdhd timescale'));
-        if (m.durationBytes === 4) writeU32(view, m.durationOffset, checkedU32(m.duration / roundedDivider, 'mdhd duration', 0));
-        else writeU64(view, m.durationOffset, m.duration / BigInt(roundedDivider));
+        patchMdhdInPlace(bytes, mdhd, divider);
         mdhdCount++;
       }
     }
 
-    if (mvhdCount === 0 || mdhdCount === 0) throw new Error('No mvhd/mdhd timing boxes were found to patch.');
-    return { buffer: bytes.buffer, bytes, mvhdCount, mdhdCount, divider: roundedDivider };
+    return { mvhdCount, mdhdCount };
   }
 
-  window.Upload120Patcher = { inspectMp4, patchMp4Buffer, walkBoxes };
+  // Numeric dividers preserve the old behavior. Object options opt into the local method selector.
+  function patchMp4Buffer(input, options = 4) {
+    const { divider, method } = normalizePatchOptions(options);
+    const source = asBytes(input);
+    let bytes = new Uint8Array(source.byteLength);
+    bytes.set(source);
+    const patchMediaTiming = method !== 'header-lite';
+    const warnings = [];
+
+    const { mvhdCount, mdhdCount } = patchTimingFields(bytes, divider, patchMediaTiming);
+    if (mvhdCount === 0 || (patchMediaTiming && mdhdCount === 0)) throw new Error('No mvhd/mdhd timing boxes were found to patch.');
+
+    const operations = [];
+    let elstCount = 0;
+    let metadataCount = 0;
+
+    if (method === 'balanced-sync') {
+      const editLists = collectEditListOperations(bytes, divider);
+      operations.push(...editLists.operations);
+      elstCount = editLists.elstCount;
+      if (elstCount === 0) warnings.push('No tracks were available for an edit-list speed guard.');
+    }
+
+    if (method !== 'classic-force') {
+      const metadataOps = collectMetadataOperations(bytes, method, divider);
+      operations.push(...metadataOps);
+      metadataCount = metadataOps.length;
+    }
+
+    if (operations.length > 0) bytes = applyOperations(bytes, operations);
+
+    return {
+      buffer: bytes.buffer,
+      bytes,
+      method,
+      divider,
+      warnings,
+      mvhdCount,
+      mdhdCount,
+      elstCount,
+      metadataCount
+    };
+  }
+
+  window.Upload120Patcher = { METHODS, inspectMp4, patchMp4Buffer, walkBoxes };
 })();

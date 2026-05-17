@@ -6,9 +6,31 @@ const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
 
-const { inspectMp4, patchMp4Buffer } = require('../src/patcher');
-
 const CONTAINER_BOXES = new Set(['moov', 'trak', 'mdia', 'minf', 'stbl', 'edts', 'udta']);
+
+function loadWebsitePatcher() {
+  const browserSource = fs.readFileSync(path.join(__dirname, '..', 'docs', 'patcher.browser.js'), 'utf8');
+  const context = {
+    window: {},
+    ArrayBuffer,
+    BigInt,
+    DataView,
+    Error,
+    JSON,
+    Map,
+    Math,
+    Number,
+    Object,
+    RegExp,
+    Set,
+    String,
+    TypeError,
+    Uint8Array
+  };
+
+  vm.runInNewContext(browserSource, context);
+  return context.window.Upload120Patcher;
+}
 
 function u32(value) {
   const buf = Buffer.alloc(4);
@@ -135,72 +157,64 @@ function readElstRateInteger(buf) {
   return editList ? buf.readInt16BE(editList.contentStart + 16) : 0;
 }
 
+function outputBuffer(result) {
+  return Buffer.from(result.bytes);
+}
+
 test('numeric divider keeps the legacy classic-force timing patch', () => {
+  const { patchMp4Buffer } = loadWebsitePatcher();
   const source = makeSampleMp4();
   const result = patchMp4Buffer(source, 4);
+  const output = outputBuffer(result);
 
   assert.equal(result.method, 'classic-force');
   assert.equal(result.divider, 4);
   assert.equal(result.mvhdCount, 1);
   assert.equal(result.mdhdCount, 1);
   assert.equal(result.elstCount, 0);
-  assert.equal(readMvhdTimescale(result.buffer), 30);
-  assert.equal(readMdhdTimescale(result.buffer), 30);
-  assert.equal(findBoxes(result.buffer, 'elst').length, 0);
+  assert.equal(readMvhdTimescale(output), 30);
+  assert.equal(readMdhdTimescale(output), 30);
+  assert.equal(findBoxes(output, 'elst').length, 0);
 });
 
 test('header-lite patches movie timing only and shifts chunk offsets for metadata', () => {
+  const { patchMp4Buffer } = loadWebsitePatcher();
   const source = makeSampleMp4();
   const originalOffset = firstChunkOffset(source);
   const result = patchMp4Buffer(source, { method: 'header-lite', divider: 4 });
+  const output = outputBuffer(result);
 
   assert.equal(result.method, 'header-lite');
   assert.equal(result.mvhdCount, 1);
   assert.equal(result.mdhdCount, 0);
   assert.equal(result.elstCount, 0);
-  assert.equal(readMvhdTimescale(result.buffer), 30);
-  assert.equal(readMdhdTimescale(result.buffer), 120);
-  assert.equal(findBoxes(result.buffer, 'u120').length, 1);
-  assert.equal(firstChunkOffset(result.buffer), originalOffset + (result.buffer.length - source.length));
+  assert.equal(readMvhdTimescale(output), 30);
+  assert.equal(readMdhdTimescale(output), 120);
+  assert.equal(findBoxes(output, 'u120').length, 1);
+  assert.equal(firstChunkOffset(output), originalOffset + (output.length - source.length));
 });
 
 test('balanced-sync adds an edit list speed guard and shifts media offsets', () => {
+  const { patchMp4Buffer } = loadWebsitePatcher();
   const source = makeSampleMp4();
   const originalOffset = firstChunkOffset(source);
   const result = patchMp4Buffer(source, { method: 'balanced-sync', divider: 4 });
+  const output = outputBuffer(result);
 
   assert.equal(result.method, 'balanced-sync');
   assert.equal(result.mvhdCount, 1);
   assert.equal(result.mdhdCount, 1);
   assert.equal(result.elstCount, 1);
-  assert.equal(readMvhdTimescale(result.buffer), 30);
-  assert.equal(readMdhdTimescale(result.buffer), 30);
-  assert.equal(readElstRateInteger(result.buffer), 4);
-  assert.equal(findBoxes(result.buffer, 'u120').length, 1);
-  assert.equal(firstChunkOffset(result.buffer), originalOffset + (result.buffer.length - source.length));
+  assert.equal(readMvhdTimescale(output), 30);
+  assert.equal(readMdhdTimescale(output), 30);
+  assert.equal(readElstRateInteger(output), 4);
+  assert.equal(findBoxes(output, 'u120').length, 1);
+  assert.equal(firstChunkOffset(output), originalOffset + (output.length - source.length));
 });
 
 test('browser patcher exposes the same public method ids as the Node patcher', () => {
-  const browserSource = fs.readFileSync(path.join(__dirname, '..', 'docs', 'patcher.browser.js'), 'utf8');
-  const context = {
-    window: {},
-    ArrayBuffer,
-    BigInt,
-    DataView,
-    Error,
-    Map,
-    Math,
-    Number,
-    RegExp,
-    Set,
-    String,
-    TypeError,
-    Uint8Array
-  };
-
-  vm.runInNewContext(browserSource, context);
-
-  const methodIds = Array.from(context.window.Upload120Patcher.METHODS, method => method.id);
+  const patcher = loadWebsitePatcher();
+  const methodIds = Array.from(patcher.METHODS, method => method.id);
   assert.deepEqual(
     methodIds,
     ['balanced-sync', 'header-lite', 'classic-force']
@@ -208,28 +222,10 @@ test('browser patcher exposes the same public method ids as the Node patcher', (
 });
 
 test('browser patcher applies balanced-sync to the synthetic MP4', () => {
-  const browserSource = fs.readFileSync(path.join(__dirname, '..', 'docs', 'patcher.browser.js'), 'utf8');
-  const context = {
-    window: {},
-    ArrayBuffer,
-    BigInt,
-    DataView,
-    Error,
-    JSON,
-    Map,
-    Math,
-    Number,
-    Object,
-    RegExp,
-    Set,
-    String,
-    TypeError,
-    Uint8Array
-  };
+  const patcher = loadWebsitePatcher();
   const source = makeSampleMp4();
 
-  vm.runInNewContext(browserSource, context);
-  const result = context.window.Upload120Patcher.patchMp4Buffer(
+  const result = patcher.patchMp4Buffer(
     source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength),
     { method: 'balanced-sync', divider: 4 }
   );
@@ -242,9 +238,10 @@ test('browser patcher applies balanced-sync to the synthetic MP4', () => {
 });
 
 test('balanced-sync output remains inspectable after insertion', () => {
+  const { inspectMp4, patchMp4Buffer } = loadWebsitePatcher();
   const source = makeSampleMp4();
   const result = patchMp4Buffer(source, { method: 'balanced-sync', divider: 4 });
-  const info = inspectMp4(result.buffer);
+  const info = inspectMp4(result.bytes);
 
   assert.equal(info.isMp4, true);
   assert.equal(info.movieTimescale, 30);

@@ -3,14 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="refresh" content="0; url=https://github.com/williamm0/Upload120/releases" />
-  <link rel="canonical" href="https://github.com/williamm0/Upload120/releases" />
-  <title>Upload120 Releases</title>
-  <script>
-    window.location.replace('https://github.com/williamm0/Upload120/releases');
-  </script>
+  <meta name="description" content="Upload120 legacy desktop builds are outdated archives. Use the website for current behavior." />
+  <title>Upload120 Legacy Archive</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f5f7;
+      --surface: #fff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: rgba(0, 0, 0, 0.1);
+      --accent: #0071e3;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 32px 18px;
+      color: var(--text);
+      background: var(--bg);
+      font-family: var(--sans);
+    }
+
+    main {
+      width: min(720px, 100%);
+      padding: clamp(28px, 6vw, 48px);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface);
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-size: clamp(34px, 7vw, 58px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    p,
+    li {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    ul {
+      padding-left: 20px;
+    }
+
+    a {
+      color: var(--accent);
+      font-weight: 650;
+      text-decoration: none;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .actions a {
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+    }
+  </style>
 </head>
 <body>
-  <p><a href="https://github.com/williamm0/Upload120/releases">Continue to Upload120 releases</a></p>
+  <main>
+    <p>Archive</p>
+    <h1>Outdated legacy desktop builds</h1>
+    <p>Upload120 is now a website-only tool. The older desktop builds are kept only for archival access and are not maintained, recommended, or part of the current product.</p>
+    <ul>
+      <li>Upload120-1.2.0-arm64.dmg</li>
+      <li>Upload120-1.2.0-arm64.pkg</li>
+      <li>Upload120-1.2.0-arm64.zip</li>
+      <li>Upload120-1.2.0-x64.exe</li>
+      <li>Upload120-1.2.0-portable.exe</li>
+    </ul>
+    <p>Use the website for current local patching behavior.</p>
+    <div class="actions">
+      <a href="../">Open current website</a>
+      <a href="https://github.com/williamm0/Upload120/releases">View old releases</a>
+    </div>
+  </main>
 </body>
 </html>

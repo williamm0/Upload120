@@ -9,6 +9,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --enable-logging",
+    "test": "node --test",
     "pack:mac": "electron-builder --mac --arm64 --dir",
     "build:mac": "electron-builder --mac --arm64",
     "build:win": "electron-builder --win --x64",

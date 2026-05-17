@@ -21,7 +21,7 @@
 
     <nav class="nav" aria-label="Page sections">
       <a class="nav-item active" href="#patch" data-nav="patch">Patch</a>
-      <a class="nav-item" href="#how" data-nav="how">How it works</a>
+      <a class="nav-item" href="#how" data-nav="how">Methods</a>
       <a class="nav-item" href="#settings" data-nav="settings">Settings</a>
       <a class="nav-item" href="#about" data-nav="about">About</a>
     </nav>
@@ -34,7 +34,7 @@
       <div class="intro">
         <p class="eyebrow">Local MP4 patcher</p>
         <h1>High-FPS metadata, patched privately.</h1>
-        <p class="lead">Upload120 updates MP4 timing headers in your browser. Your video stays on this device, and the actual frames are left untouched.</p>
+        <p class="lead">Upload120 builds local MP4 variants for high-FPS uploads. Your video stays on this device, and the actual frames are left untouched.</p>
       </div>
 
       <div class="patcher">
@@ -50,13 +50,38 @@
           </div>
         </div>
 
-        <div class="notice">For the best result, upload the patched file from a desktop browser. Mobile apps may re-encode the video.</div>
+        <div class="notice">For the best result, upload the patched file from TikTok Web on a computer. Avoid in-upload edits, cropping, music, or mobile reposting because those steps can re-encode the video.</div>
+
+        <section class="control-panel method-panel" aria-labelledby="methodTitle">
+          <div class="panel-head">
+            <div>
+              <p class="label">Method</p>
+              <h3 id="methodTitle">Pick a local patch recipe.</h3>
+            </div>
+            <span class="hint" id="methodHint">Recommended for normal desktop preview.</span>
+          </div>
+
+          <div class="method-row" id="methodRow" role="radiogroup" aria-label="Local patch method">
+            <button class="method-card active" type="button" data-method="balanced-sync" role="radio" aria-checked="true">
+              <span class="method-top"><span class="method-name">Balanced Sync</span><span class="method-tag">Best</span></span>
+              <span class="method-copy">Timing patch with an edit-list speed guard for players that honor desktop preview timing.</span>
+            </button>
+            <button class="method-card" type="button" data-method="header-lite" role="radio" aria-checked="false">
+              <span class="method-top"><span class="method-name">Header Lite</span><span class="method-tag quiet">Safe preview</span></span>
+              <span class="method-copy">Movie-header-only variant. It keeps media timing closer to source, but the upload effect may be weaker.</span>
+            </button>
+            <button class="method-card" type="button" data-method="classic-force" role="radio" aria-checked="false">
+              <span class="method-top"><span class="method-name">Classic Force</span><span class="method-tag warn">Legacy</span></span>
+              <span class="method-copy">Original mvhd/mdhd timing patch. Strongest legacy path, but desktop playback can appear slow.</span>
+            </button>
+          </div>
+        </section>
 
         <section class="control-panel" aria-labelledby="multiplierTitle">
           <div class="panel-head">
             <div>
               <p class="label">Multiplier</p>
-              <h3 id="multiplierTitle">Choose the same timing patch used by the app.</h3>
+              <h3 id="multiplierTitle">Choose the timing strength.</h3>
             </div>
             <span class="hint" id="modeHint">Auto picks 2x for 60 fps, 3x for 90, 4x for 120+</span>
           </div>
@@ -102,24 +127,24 @@
     <section class="section" id="how">
       <div class="section-copy">
         <p class="eyebrow">How it works</p>
-        <h2>Only the timing metadata changes.</h2>
-        <p>Upload120 inspects the MP4 structure, estimates video FPS from sample timing, and rewrites movie and media timing headers. It does not create new frames or alter image quality.</p>
+        <h2>Multiple local methods, one private file flow.</h2>
+        <p>Upload120 inspects the MP4 structure, estimates video FPS from sample timing, and writes the selected container-level recipe in the browser. It does not create new frames or upload the source file anywhere.</p>
       </div>
       <div class="details-grid">
         <article>
+          <span>elst</span>
+          <h3>Balanced Sync</h3>
+          <p>Adds an edit-list speed guard around the timing patch so desktop players that honor edit lists can preview closer to normal speed.</p>
+        </article>
+        <article>
           <span>mvhd</span>
-          <h3>Movie timing</h3>
-          <p>Updates the global timescale and duration fields used by the container.</p>
+          <h3>Header Lite</h3>
+          <p>Changes the movie-level timing header and adds a local metadata marker while leaving media sample timing untouched.</p>
         </article>
         <article>
           <span>mdhd</span>
-          <h3>Track timing</h3>
-          <p>Updates timing fields on each media track so the file stays internally consistent.</p>
-        </article>
-        <article>
-          <span>stts</span>
-          <h3>FPS estimate</h3>
-          <p>Reads sample deltas to estimate the source frame rate before patching.</p>
+          <h3>Classic Force</h3>
+          <p>Uses the original movie and media header patch for the strongest legacy compatibility path.</p>
         </article>
       </div>
     </section>
@@ -147,10 +172,23 @@
         <h2>Local-only web companion for Upload120.</h2>
         <p>The web version focuses on patching files in the browser. For source code and desktop releases, use the project links.</p>
       </div>
-      <div class="link-grid">
-        <a href="source/">Source code</a>
-        <a href="app/">App download</a>
-        <a href="https://jxffx.com" target="_blank" rel="noopener">jxffx.com</a>
+      <div>
+        <div class="link-grid">
+          <a href="source/">Source code</a>
+          <a href="app/">App download</a>
+          <a href="https://jxffx.com" target="_blank" rel="noopener">jxffx.com</a>
+        </div>
+        <div class="credits-panel">
+          <h3>Research credits</h3>
+          <p>These local recipes are independent implementations informed by public MP4 container behavior and community upload research.</p>
+          <div class="credit-links">
+            <a href="https://method.itzcrih.it/" target="_blank" rel="noopener">itzCrih</a>
+            <a href="https://www.qualitymax.org/" target="_blank" rel="noopener">Qualitymax</a>
+            <a href="https://kryptools.org/" target="_blank" rel="noopener">Kryp</a>
+            <a href="https://addons.mozilla.org/en-US/firefox/addon/maska-tiktok-upload-method/" target="_blank" rel="noopener">Maska</a>
+            <a href="https://github.com/ut0ku/120fps-method" target="_blank" rel="noopener">120fps-method</a>
+          </div>
+        </div>
       </div>
     </section>
   </main>

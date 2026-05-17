@@ -8,6 +8,8 @@
   const queueEl = document.querySelector('#queue');
   const processBtn = document.querySelector('#processBtn');
   const clearQueueBtn = document.querySelector('#clearQueueBtn');
+  const methodRow = document.querySelector('#methodRow');
+  const methodHint = document.querySelector('#methodHint');
   const multiplierRow = document.querySelector('#multiplierRow');
   const customMultiplier = document.querySelector('#customMultiplier');
   const suffixInput = document.querySelector('#suffixInput');
@@ -15,6 +17,22 @@
   const modeHint = document.querySelector('#modeHint');
   const navItems = [...document.querySelectorAll('[data-nav]')];
 
+  const methodCopy = {
+    'balanced-sync': {
+      name: 'Balanced Sync',
+      hint: 'Recommended for normal desktop preview.'
+    },
+    'header-lite': {
+      name: 'Header Lite',
+      hint: 'Safest local preview, weaker upload effect.'
+    },
+    'classic-force': {
+      name: 'Classic Force',
+      hint: 'Legacy behavior; desktop playback can look slow.'
+    }
+  };
+
+  let selectedMethod = 'balanced-sync';
   let selectedMode = 'auto';
   let queue = [];
   let nextId = 1;
@@ -54,6 +72,10 @@
     return `${item.divider}x`;
   }
 
+  function methodLabel(method) {
+    return methodCopy[method]?.name || method;
+  }
+
   function effectiveFps(item) {
     return item.info?.fps ? item.info.fps * item.divider : 0;
   }
@@ -81,6 +103,9 @@
       const info = item.info || {};
       const resolution = info.width && info.height ? `${info.width} x ${info.height}` : 'Unknown';
       const statusClass = item.status === 'done' ? 'done' : item.status === 'error' ? 'error' : '';
+      const warningLine = item.warnings?.length
+        ? `<div class="warning-line">${escapeHtml(item.warnings[0])}</div>`
+        : '';
       const download = item.url
         ? `<a class="download-btn" href="${item.url}" download="${item.outputName}">Download</a>`
         : '<span class="metric-value">-</span>';
@@ -90,11 +115,12 @@
             <div class="file-name">${escapeHtml(item.file.name)}</div>
             <div class="file-sub">${formatBytes(item.file.size)} / ${escapeHtml(item.file.type || 'video file')}</div>
           </div>
+          <div><div class="metric-label">Method</div><div class="metric-value">${escapeHtml(methodLabel(item.method))}</div></div>
           <div><div class="metric-label">Detected FPS</div><div class="metric-value">${formatFps(info.fps)}</div></div>
-          <div><div class="metric-label">Resolution</div><div class="metric-value">${resolution}</div></div>
           <div><div class="metric-label">Mode</div><div class="metric-value">${modeLabel(item)}</div></div>
           <div><div class="metric-label">Output FPS</div><div class="metric-value">${formatFps(effectiveFps(item))}</div></div>
-          <div><div class="metric-label">Status</div><div class="status-pill ${statusClass}">${escapeHtml(item.message || item.status)}</div></div>
+          <div><div class="metric-label">Resolution</div><div class="metric-value">${resolution}</div></div>
+          <div><div class="metric-label">Status</div><div class="status-pill ${statusClass}">${escapeHtml(item.message || item.status)}</div>${warningLine}</div>
           <div>${download}</div>
         </div>`;
     }).join('');
@@ -112,10 +138,12 @@
       const item = {
         id: nextId++,
         file,
+        method: selectedMethod,
         mode: selectedMode,
         divider: selectedMode === 'auto' ? 0 : getDivider(),
         status: 'Inspecting',
         message: 'Inspecting',
+        warnings: [],
         info: null,
         url: '',
         outputName: outputName(file.name)
@@ -150,13 +178,18 @@
 
       try {
         if (item.mode === 'auto') item.divider = getDivider(item.info?.fps || 0);
-        const result = patcher.patchMp4Buffer(item.sourceBuffer, item.divider);
+        const result = patcher.patchMp4Buffer(item.sourceBuffer, {
+          divider: item.divider,
+          method: item.method
+        });
         const blob = new Blob([result.bytes], { type: item.file.type || 'video/mp4' });
         if (item.url) URL.revokeObjectURL(item.url);
+        item.method = result.method;
+        item.warnings = result.warnings || [];
         item.outputName = outputName(item.file.name);
         item.url = URL.createObjectURL(blob);
         item.status = 'done';
-        item.message = `Done / mvhd ${result.mvhdCount}, mdhd ${result.mdhdCount}`;
+        item.message = item.warnings.length ? 'Done with note' : 'Done';
         if (autoDownloadInput.checked) triggerDownload(item);
       } catch (error) {
         item.status = 'error';
@@ -190,6 +223,18 @@
   fileInput.addEventListener('change', event => addFiles(event.target.files));
   clearQueueBtn.addEventListener('click', clearQueue);
   processBtn.addEventListener('click', processQueue);
+
+  methodRow.addEventListener('click', event => {
+    const card = event.target.closest('[data-method]');
+    if (!card) return;
+    selectedMethod = card.dataset.method;
+    document.querySelectorAll('[data-method]').forEach(el => {
+      const active = el === card;
+      el.classList.toggle('active', active);
+      el.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+    methodHint.textContent = methodCopy[selectedMethod]?.hint || '';
+  });
 
   ['dragenter', 'dragover'].forEach(type => {
     dropzone.addEventListener(type, event => {

@@ -2,7 +2,7 @@
 
 Upload120 is a PC upload helper for TikTok Studio.
 
-Website: https://upload120.jxffx.com/
+Website: https://upload120.com/
 
 ## What It Does
 

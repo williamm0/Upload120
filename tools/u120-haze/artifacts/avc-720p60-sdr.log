@@ -1,0 +1,8 @@
+source container can be rebuilt directly
+appended 17 silent AAC frames in chunks of 9+8; the last chunk uses sample entry 2
+added a second mp4a with the side-pair config
+duplicated the AAC track so both tracks share the same samples
+encoder tag: Upload120 Studio Method https://upload120.com
+wrote 102 bytes of silent frames into a second mdat
+sample identity ok: 60 video, 48 audio plus 17 silent x2, sha256 6304f2b611921e10
+wrote /agent/repos/Upload120/tools/u120-haze/artifacts/avc-720p60-sdr.out.mp4 (583635 bytes)

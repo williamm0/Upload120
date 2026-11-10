@@ -1,7 +1,7 @@
 verdict: PASS
 
-input:     /agent/repos/Upload120/tools/u120-haze/artifacts/avc-1080p60-sdr.mp4
-output:    /agent/repos/Upload120/tools/u120-haze/artifacts/avc-1080p60-sdr.out.mp4
+input:     tools/u120-haze/artifacts/avc-1080p60-sdr.mp4
+output:    tools/u120-haze/artifacts/avc-1080p60-sdr.out.mp4
 reference: /tmp/haze-ref/haze.mp4
 
 == what the container change did (input -> output) ==
@@ -14,7 +14,7 @@ output top level:
   ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
   mdat off=24 size=1908891 payload=1908883
   mdat off=1908915 size=110 payload=102 pattern-match
-  moov off=1909025 size=5815
+  moov off=1909025 size=5992
 input moov atoms:
   moov 4318
     mvhd 108
@@ -71,20 +71,20 @@ input moov atoms:
           ©too 37
             data 29
 output moov atoms:
-  moov 5815
+  moov 5992
     mvhd 108
-    trak 2903
+    trak 2771
       tkhd 92
       edts 36
         elst 28
-      mdia 2767
+      mdia 2635
         mdhd 32
         hdlr 45
-        minf 2682
+        minf 2550
           vmhd 20
           dinf 36
             dref 28
-          stbl 2618
+          stbl 2486
             stsd 214
               avc1 198
                 avcC 57
@@ -97,49 +97,50 @@ output moov atoms:
             stsc 652
             stsz 500
             stco 392
-            sdtp 132
-    trak 1333
+    trak 1534
       tkhd 92
       edts 36
         elst 28
-      mdia 1197
+      mdia 1398
         mdhd 32
         hdlr 45
-        minf 1112
+        minf 1313
           smhd 16
           dinf 36
             dref 28
-          stbl 1052
-            stsd 126
+          stbl 1253
+            stsd 219
               mp4a 110
                 esds 54
                 btrt 20
-            stts 32
-            stsc 40
-            stsz 400
-            stco 392
+              mp4a 93
+                esds 57
+            stts 40
+            stsc 64
+            stsz 468
+            stco 400
             sgpd 26
             sbgp 28
-    trak 1333
+    trak 1441
       tkhd 92
       edts 36
         elst 28
-      mdia 1197
+      mdia 1305
         mdhd 32
         hdlr 45
-        minf 1112
+        minf 1220
           smhd 16
           dinf 36
             dref 28
-          stbl 1052
+          stbl 1160
             stsd 126
               mp4a 110
                 esds 54
                 btrt 20
-            stts 32
-            stsc 40
-            stsz 400
-            stco 392
+            stts 40
+            stsc 64
+            stsz 468
+            stco 400
             sgpd 26
             sbgp 28
     udta 130
@@ -151,9 +152,15 @@ output moov atoms:
 input udta: [('©too', 1, 'Lavf60.16.100')]
 output udta: [('©too', 1, 'Upload120 Studio Method https://upload120.com')]
 atoms removed from the input moov:
-  (none)
+  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a
+  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a/btrt
+  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a/esds
 atoms added:
-  + moov/trak[0]/mdia/minf/stbl/sdtp
+  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a[0]
+  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a[0]/btrt
+  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a[0]/esds
+  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a[1]
+  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a[1]/esds
   + moov/trak[2]
   + moov/trak[2]/edts
   + moov/trak[2]/edts/elst
@@ -179,30 +186,39 @@ atoms added:
 
 == sample identity vs input ==
 ok    video samples 120/120 match  combined 7d7363adbaf578634f89dab8b5deb4f7d46d3b21b62f24f9119b6907eef6d1f0
-ok    audio track 1 samples 95/95 match input  combined 2eeec786ab312a4e621b80e6a6d5eb0f87fe55b6eb76f9025ce4ebd8421a1f72
-ok    audio track 2 samples 95/95 match input  combined 2eeec786ab312a4e621b80e6a6d5eb0f87fe55b6eb76f9025ce4ebd8421a1f72
+ok    audio track 1 keeps 95 input samples and adds 17 silent frames  combined 6628c0c501becdd2e0000901ccbd52b51bbfe040ea85be54a58a8d9d8bc5d49a
+ok    audio track 2 keeps 95 input samples and adds 17 silent frames  combined 6628c0c501becdd2e0000901ccbd52b51bbfe040ea85be54a58a8d9d8bc5d49a
 ok    output audio tracks point at the same file offsets
 
 == layout checks ==
 ok    top-level order is ftyp, mdat, mdat, moov
 ok    ftyp mp42 minor 0, compatible mp42, mp41
 ok    second mdat is 21 10 04 60 8c 1c repeated 17 times
-ok    mvhd time fields are zero and timescale is 1000
+ok    mvhd time fields are zero (timescale 1000 left as the source wrote it)
 ok    one video track and two audio tracks
 ok    next_track_id is 4
-ok    video tkhd flags=7, times zero, alternate_group 0
-ok    video mdhd timescale 60000, times zero
-ok    video elst media_time 0, rate 1
-ok    video sdtp 120 bytes, 0x24 x 2, 0x10 x 118
-ok    audio 1 tkhd flags=1, times zero, alternate_group 0
-ok    audio 1 mdhd timescale 48000, times zero
-ok    audio 1 elst media_time 0, rate 1
-ok    audio 2 tkhd flags=1, times zero, alternate_group 0
-ok    audio 2 mdhd timescale 48000, times zero
-ok    audio 2 elst media_time 0, rate 1
-ok    the two audio tracks share 95 sample offsets and sizes
+ok    video tkhd flags=7, times zero (alternate_group 0 left as the source wrote it)
+ok    video mdhd times zero (timescale 15360 left as the source wrote it)
+  video sdtp (kept from the source, not required): missing
+ok    audio 1 tkhd flags=1, times zero (alternate_group 1)
+ok    audio 1 mdhd timescale 48000, times zero, duration 114432
+  audio 1 elst segment=2362 media_time=1024 rate=65536
+ok    audio 2 tkhd flags=1, times zero (alternate_group 1)
+ok    audio 2 mdhd timescale 48000, times zero, duration 114432
+  audio 2 elst segment=2362 media_time=1024 rate=65536
+ok    the two audio tracks share 112 sample offsets and sizes
+ok    movie duration 2362 follows the audio
 ok    only udta tag is ©too = Upload120 Studio Method https://upload120.com
 ok    moov does not contain the Haze encoder tag
+
+== audio structure ==
+ok    first audio track has a second mp4a whose AudioSpecificConfig is 11 80 04 c0 40 00 20 00
+ok    duplicate audio track has one mp4a sample entry
+ok    last 17 audio samples are 21 10 04 60 8c 1c
+ok    those 17 frames sit in the second mdat
+ok    first audio track: silent chunk of 9 on entry 1, then 8 on entry 2
+ok    duplicate track shares those chunks and keeps every frame on entry 1
+ok    the silent run starts in its own chunk
 
 == color guard ==
   input    bt709/bt709/bt709/tv yuv420p High
@@ -214,7 +230,7 @@ output:
   ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
   mdat off=24 size=1908891 payload=1908883
   mdat off=1908915 size=110 payload=102 pattern-match
-  moov off=1909025 size=5815
+  moov off=1909025 size=5992
 reference:
   ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
   mdat off=24 size=192503019 payload=192503011
@@ -229,42 +245,37 @@ atoms only in the output:
   + moov/trak[0]/mdia/minf/stbl/stsd/avc1/pasp
   + moov/trak[1]/mdia/minf/stbl/sbgp
   + moov/trak[1]/mdia/minf/stbl/sgpd
-  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a
-  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a/btrt
-  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a/esds
+  + moov/trak[1]/mdia/minf/stbl/stsd/mp4a[0]/btrt
   + moov/trak[2]/mdia/minf/stbl/sbgp
   + moov/trak[2]/mdia/minf/stbl/sgpd
   + moov/trak[2]/mdia/minf/stbl/stsd/mp4a/btrt
 atoms only in the reference:
   - moov/trak[0]/mdia/minf/hdlr
+  - moov/trak[0]/mdia/minf/stbl/sdtp
   - moov/trak[0]/mdia/minf/stbl/stsd/hvc1
   - moov/trak[0]/mdia/minf/stbl/stsd/hvc1/hvcC
   - moov/trak[1]/mdia/minf/hdlr
-  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a[0]
-  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a[0]/esds
-  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a[1]
-  - moov/trak[1]/mdia/minf/stbl/stsd/mp4a[1]/esds
   - moov/trak[2]/mdia/minf/hdlr
-shared atom paths: 63
+shared atom paths: 66
 output udta: [('©too', 1, 'Upload120 Studio Method https://upload120.com')]
 reference udta: [('©too', 1, 'Haze Quality Method https://hazemethod.xyz')]
 the tag text is replaced on purpose; the reference string is not written
 
 output moov tree:
-  moov 5815
+  moov 5992
     mvhd 108
-    trak 2903
+    trak 2771
       tkhd 92
       edts 36
         elst 28
-      mdia 2767
+      mdia 2635
         mdhd 32
         hdlr 45
-        minf 2682
+        minf 2550
           vmhd 20
           dinf 36
             dref 28
-          stbl 2618
+          stbl 2486
             stsd 214
               avc1 198
                 avcC 57
@@ -277,49 +288,50 @@ output moov tree:
             stsc 652
             stsz 500
             stco 392
-            sdtp 132
-    trak 1333
+    trak 1534
       tkhd 92
       edts 36
         elst 28
-      mdia 1197
+      mdia 1398
         mdhd 32
         hdlr 45
-        minf 1112
+        minf 1313
           smhd 16
           dinf 36
             dref 28
-          stbl 1052
-            stsd 126
+          stbl 1253
+            stsd 219
               mp4a 110
                 esds 54
                 btrt 20
-            stts 32
-            stsc 40
-            stsz 400
-            stco 392
+              mp4a 93
+                esds 57
+            stts 40
+            stsc 64
+            stsz 468
+            stco 400
             sgpd 26
             sbgp 28
-    trak 1333
+    trak 1441
       tkhd 92
       edts 36
         elst 28
-      mdia 1197
+      mdia 1305
         mdhd 32
         hdlr 45
-        minf 1112
+        minf 1220
           smhd 16
           dinf 36
             dref 28
-          stbl 1052
+          stbl 1160
             stsd 126
               mp4a 110
                 esds 54
                 btrt 20
-            stts 32
-            stsc 40
-            stsz 400
-            stco 392
+            stts 40
+            stsc 64
+            stsz 468
+            stco 400
             sgpd 26
             sbgp 28
     udta 130
@@ -417,22 +429,22 @@ reference moov tree:
   tkhd.height                  1080.0                   3840.0                   content
   mdhd.creation                0                        0                        MATCH
   mdhd.modification            0                        0                        MATCH
-  mdhd.timescale               60000                    60000                    MATCH
+  mdhd.timescale               15360                    60000                    DIFF
   mdhd.language                und                      eng                      content
-  mdhd.duration                120000                   1971000                  content
+  mdhd.duration                30720                    1971000                  content
   elst.count                   1                        1                        MATCH
-  elst.media_time              0                        0                        MATCH
+  elst.media_time              512                      0                        DIFF
   elst.rate                    0x10000                  0x10000                  MATCH
   elst.segment                 2000                     32850                    content
   hdlr.name                    VideoHandler\x00         \x1fMainconcept Video Media Handler content
   stsd.entries                 avc1                     hvc1                     content
-  compressor                                                                     MATCH
+  compressor                   \x15Lavc60.31.102 libx264                          content
   hvcC                         -                        profile=2 tier=high level=153 chroma=1 bitdepth=10 arrays=3 bytes=118 content
   avcC                         profile=100 compat=0 level=42 bytes=49 -                        content
   colr                         nclx pri=1 trc=1 mtx=1   -                        content
-  stts                         1 rows first=[(120, 1000)] 1 rows first=[(1971, 1000)] content
+  stts                         1 rows first=[(120, 256)] 1 rows first=[(1971, 1000)] content
   ctts                         yes                      no                       content
-  sdtp                         yes                      yes                      MATCH
+  sdtp                         no                       yes                      DIFF
   samples                      120                      1971                     content
   samples.in_mdat              {0: 120}                 {0: 1971}                content
   stsc.last_sdi                1                        1                        MATCH
@@ -442,57 +454,57 @@ reference moov tree:
   tkhd.flags                   1                        1                        MATCH
   tkhd.creation                0                        0                        MATCH
   tkhd.modification            0                        0                        MATCH
-  tkhd.alternate_group         0                        0                        MATCH
+  tkhd.alternate_group         1                        0                        DIFF
   tkhd.volume                  256                      256                      MATCH
   tkhd.matrix                  65536,0,0,0,65536,0,0,0,1073741824 65536,0,0,0,65536,0,0,0,1073741824 MATCH
-  tkhd.duration                2021                     33237                    content
+  tkhd.duration                2362                     33237                    content
   tkhd.width                   0.0                      0.0                      MATCH
   tkhd.height                  0.0                      0.0                      MATCH
   mdhd.creation                0                        0                        MATCH
   mdhd.modification            0                        0                        MATCH
   mdhd.timescale               48000                    48000                    MATCH
   mdhd.language                und                      eng                      content
-  mdhd.duration                97024                    1595392                  content
+  mdhd.duration                114432                   1595392                  content
   elst.count                   1                        1                        MATCH
-  elst.media_time              0                        0                        MATCH
+  elst.media_time              1024                     0                        DIFF
   elst.rate                    0x10000                  0x10000                  MATCH
-  elst.segment                 2021                     33237                    content
+  elst.segment                 2362                     33237                    content
   hdlr.name                    SoundHandler\x00         #Mainconcept MP4 Sound Media Handler content
-  stsd.entries                 mp4a                     mp4a mp4a                content
-  stts                         2 rows first=[(94, 1024)] 1 rows first=[(1558, 1024)] content
+  stsd.entries                 mp4a mp4a                mp4a mp4a                MATCH
+  stts                         3 rows first=[(94, 1024)] 1 rows first=[(1558, 1024)] content
   ctts                         no                       no                       MATCH
   sdtp                         no                       no                       MATCH
-  samples                      95                       1558                     content
-  samples.in_mdat              {0: 95}                  {0: 1541, 1: 17}         content
-  stsc.last_sdi                1                        2                        content
+  samples                      112                      1558                     content
+  samples.in_mdat              {0: 95, 1: 17}           {0: 1541, 1: 17}         content
+  stsc.last_sdi                2                        2                        MATCH
 -- track slot 3 --
   field                        output                   reference                note
   handler                      soun                     soun                     MATCH
   tkhd.flags                   1                        1                        MATCH
   tkhd.creation                0                        0                        MATCH
   tkhd.modification            0                        0                        MATCH
-  tkhd.alternate_group         0                        0                        MATCH
+  tkhd.alternate_group         1                        0                        DIFF
   tkhd.volume                  256                      256                      MATCH
   tkhd.matrix                  65536,0,0,0,65536,0,0,0,1073741824 65536,0,0,0,65536,0,0,0,1073741824 MATCH
-  tkhd.duration                2021                     33237                    content
+  tkhd.duration                2362                     33237                    content
   tkhd.width                   0.0                      0.0                      MATCH
   tkhd.height                  0.0                      0.0                      MATCH
   mdhd.creation                0                        0                        MATCH
   mdhd.modification            0                        0                        MATCH
   mdhd.timescale               48000                    48000                    MATCH
   mdhd.language                und                      eng                      content
-  mdhd.duration                97024                    1595392                  content
+  mdhd.duration                114432                   1595392                  content
   elst.count                   1                        1                        MATCH
-  elst.media_time              0                        0                        MATCH
+  elst.media_time              1024                     0                        DIFF
   elst.rate                    0x10000                  0x10000                  MATCH
-  elst.segment                 2021                     33237                    content
+  elst.segment                 2362                     33237                    content
   hdlr.name                    SoundHandler\x00         #Mainconcept MP4 Sound Media Handler content
   stsd.entries                 mp4a                     mp4a                     MATCH
-  stts                         2 rows first=[(94, 1024)] 1 rows first=[(1558, 1024)] content
+  stts                         3 rows first=[(94, 1024)] 1 rows first=[(1558, 1024)] content
   ctts                         no                       no                       MATCH
   sdtp                         no                       no                       MATCH
-  samples                      95                       1558                     content
-  samples.in_mdat              {0: 95}                  {0: 1541, 1: 17}         content
+  samples                      112                      1558                     content
+  samples.in_mdat              {0: 95, 1: 17}           {0: 1541, 1: 17}         content
   stsc.last_sdi                1                        1                        MATCH
 
 == bitstream diff vs Haze reference ==
@@ -501,9 +513,9 @@ reference moov tree:
   output ffprobe: h264 High 1920x1080 yuv420p bt709/bt709/bt709/tv bframes=2
   reference ffprobe: hevc Main 10 2160x3840 yuv420p10le bt2020/smpte2084/bt2020nc/tv bframes=0
 
-== not the same without a different bitstream ==
-  These are differences in the coded samples or in the encoder's own headers.
-  Copying sample bytes cannot close them.
+== bitstream differences, not part of the audio structure ==
+  The served file is the original upload once audio ingest fails.
+  Codec, resolution, color, GOP, and handler text are properties of the source.
   - NAL mix differs. Reference histogram {1: 1905, 19: 66, 32: 66, 33: 66, 34: 66, 35: 1971}.
   - Reference HEVC samples each start with an access-unit delimiter (NAL 35). The output does not, because that unit is inside the sample.
   - AVC SEI (NAL 6) differs. It is inside the sample, so it stays with the copied bytes.
@@ -511,7 +523,7 @@ reference moov tree:
   - Color signaling is bt709/bt709/bt709/tv here and bt2020/smpte2084/bt2020nc/tv in the reference. The reference values are in the HEVC VUI, which lives in the SPS bytes.
   - B-frame structure differs, so composition-offset tables differ. Removing B-frames re-encodes the picture.
   - Video handler name is b'VideoHandler\x00' here and b'\x1fMainconcept Video Media Handler' in the reference (Mainconcept / Premiere).
-  - First audio sample description count is 1 here and 2 in the reference. The extra mp4a is a second decoder config, not a second copy of the samples.
-  - Output audio samples by mdat index: {0: 95}
-  - Reference audio samples by mdat index: {0: 1541, 1: 17}
-  - The reference's second mdat is not an unused marker. 17 audio samples are stored in it (17 of them are 6-byte 211004608c1c frames). Pointing new samples at that pattern would add audio the input does not contain, so this tool leaves the box unreferenced unless the input already pointed at it.
+  audio config matches the reference
+  output audio samples by mdat index: {0: 95, 1: 17}
+  reference audio samples by mdat index: {0: 1541, 1: 17}
+  silent tail matches the reference: 17 frames, last 8 on sample entry 2

@@ -1,6 +1,6 @@
 #!/bin/sh
-# Regenerate the SDR test inputs. The picture is encoded here on purpose;
-# u120_haze.py then copies those samples and only rebuilds the container.
+# Regenerate the SDR test inputs. The picture is encoded here on purpose.
+# u120_haze.py then copies those video samples and adds the silent audio tail.
 set -eu
 cd "$(dirname "$0")/artifacts"
 

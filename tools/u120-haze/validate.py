@@ -11,6 +11,7 @@ bitstream.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -47,7 +48,19 @@ from mp4 import (  # noqa: E402
     stts_rows,
     u32,
 )
-from u120_haze import AUDIO_TIMESCALE, ENCODER_TAG, HAZE_TAG, PATTERN, VIDEO_TIMESCALE  # noqa: E402
+from u120_haze import (  # noqa: E402
+    AUDIO_TIMESCALE,
+    ENCODER_TAG,
+    HAZE_TAG,
+    PADDED_DSI,
+    PATTERN,
+    PCE_ASC,
+    SDI2_COUNT,
+    SILENT_COUNT,
+    SILENT_FRAME,
+    entry_esds_payloads,
+    sample_entry_configs,
+)
 
 HDR_TRANSFER = {"smpte2084", "arib-std-b67", "smpte428", "smpte428_1"}
 HDR_PRIMARIES = {"bt2020"}
@@ -315,7 +328,11 @@ def layout_checks(path: str, moov: Box, tops: list[TopBox], report: Report) -> N
         report.ok("ftyp mp42 minor 0, compatible mp42, mp41")
     else:
         report.fail(f"ftyp major={info['major']!r} minor={info['minor']} brands={brands!r}")
-    signature = [box for box in tops if box.typ == b"mdat"][1]
+    mdats = [box for box in tops if box.typ == b"mdat"]
+    if len(mdats) < 2:
+        report.fail("there is no second mdat")
+        return
+    signature = mdats[1]
     blob = read_span(path, signature.payload_offset, signature.payload_size)
     if blob == PATTERN:
         report.ok("second mdat is 21 10 04 60 8c 1c repeated 17 times")
@@ -323,10 +340,10 @@ def layout_checks(path: str, moov: Box, tops: list[TopBox], report: Report) -> N
         report.fail(f"second mdat payload is {blob[:16].hex()} ({len(blob)} bytes)")
 
     mvhd = parse_mvhd(moov.child(b"mvhd").payload)
-    if mvhd["creation"] == 0 and mvhd["modification"] == 0 and mvhd["timescale"] == 1000:
-        report.ok("mvhd time fields are zero and timescale is 1000")
+    if mvhd["creation"] == 0 and mvhd["modification"] == 0:
+        report.ok(f"mvhd time fields are zero (timescale {mvhd['timescale']} left as the source wrote it)")
     else:
-        report.fail(f"mvhd creation={mvhd['creation']} modification={mvhd['modification']} timescale={mvhd['timescale']}")
+        report.fail(f"mvhd creation={mvhd['creation']} modification={mvhd['modification']}")
     traks = _track_rows(moov)
     videos = [trak for trak in traks if handler_kind(trak) == b"vide"]
     audios = [trak for trak in traks if handler_kind(trak) == b"soun"]
@@ -344,46 +361,39 @@ def layout_checks(path: str, moov: Box, tops: list[TopBox], report: Report) -> N
     video = videos[0]
     vtkhd = parse_tkhd(video.child(b"tkhd").payload)
     vmdhd = parse_mdhd(video.child(b"mdia").child(b"mdhd").payload)
-    velst = parse_elst(video.child(b"edts").child(b"elst").payload)
-    if vtkhd["flags"] == 7 and vtkhd["creation"] == 0 and vtkhd["modification"] == 0 and vtkhd["alternate_group"] == 0:
-        report.ok("video tkhd flags=7, times zero, alternate_group 0")
+    if vtkhd["flags"] == 7 and vtkhd["creation"] == 0 and vtkhd["modification"] == 0:
+        report.ok(f"video tkhd flags=7, times zero (alternate_group {vtkhd['alternate_group']} left as the source wrote it)")
     else:
-        report.fail(f"video tkhd flags={vtkhd['flags']} times={vtkhd['creation']}/{vtkhd['modification']} alt={vtkhd['alternate_group']}")
-    if vmdhd["timescale"] == VIDEO_TIMESCALE and vmdhd["creation"] == 0 and vmdhd["modification"] == 0:
-        report.ok("video mdhd timescale 60000, times zero")
+        report.fail(f"video tkhd flags={vtkhd['flags']} times={vtkhd['creation']}/{vtkhd['modification']}")
+    if vmdhd["creation"] == 0 and vmdhd["modification"] == 0:
+        report.ok(f"video mdhd times zero (timescale {vmdhd['timescale']} left as the source wrote it)")
     else:
-        report.fail(f"video mdhd timescale={vmdhd['timescale']} times={vmdhd['creation']}/{vmdhd['modification']}")
-    if len(velst) == 1 and velst[0][1] == 0 and velst[0][2] == 0x10000:
-        report.ok("video elst media_time 0, rate 1")
-    else:
-        report.fail(f"video elst {velst}")
+        report.fail(f"video mdhd times={vmdhd['creation']}/{vmdhd['modification']}")
     vstbl = find_stbl(video)
-    good, detail = sdtp_matches(vstbl)
-    if good:
-        report.ok(f"video sdtp {detail}")
-    else:
-        report.fail(f"video sdtp {detail}")
+    _good, detail = sdtp_matches(vstbl)
+    report.add(f"  video sdtp (kept from the source, not required): {detail}")
 
     offsets = []
     sizes = []
     for index, audio in enumerate(audios, start=1):
         tkhd = parse_tkhd(audio.child(b"tkhd").payload)
         mdhd = parse_mdhd(audio.child(b"mdia").child(b"mdhd").payload)
-        elst = parse_elst(audio.child(b"edts").child(b"elst").payload)
-        if tkhd["flags"] == 1 and tkhd["creation"] == 0 and tkhd["modification"] == 0 and tkhd["alternate_group"] == 0:
-            report.ok(f"audio {index} tkhd flags=1, times zero, alternate_group 0")
+        elst_box = audio.child(b"edts").child(b"elst") if audio.child(b"edts") else None
+        elst = parse_elst(elst_box.payload) if elst_box is not None else []
+        if tkhd["flags"] == 1 and tkhd["creation"] == 0 and tkhd["modification"] == 0:
+            report.ok(f"audio {index} tkhd flags=1, times zero (alternate_group {tkhd['alternate_group']})")
         else:
-            report.fail(
-                f"audio {index} tkhd flags={tkhd['flags']} times={tkhd['creation']}/{tkhd['modification']} alt={tkhd['alternate_group']}"
-            )
+            report.fail(f"audio {index} tkhd flags={tkhd['flags']} times={tkhd['creation']}/{tkhd['modification']}")
         if mdhd["timescale"] == AUDIO_TIMESCALE and mdhd["creation"] == 0 and mdhd["modification"] == 0:
-            report.ok(f"audio {index} mdhd timescale 48000, times zero")
+            report.ok(f"audio {index} mdhd timescale 48000, times zero, duration {mdhd['duration']}")
         else:
             report.fail(f"audio {index} mdhd timescale={mdhd['timescale']} times={mdhd['creation']}/{mdhd['modification']}")
-        if len(elst) == 1 and elst[0][1] == 0 and elst[0][2] == 0x10000:
-            report.ok(f"audio {index} elst media_time 0, rate 1")
+        if elst:
+            report.add(f"  audio {index} elst segment={elst[0][0]} media_time={elst[0][1]} rate={elst[0][2]}")
         else:
-            report.fail(f"audio {index} elst {elst}")
+            report.fail(f"audio {index} has no edit list")
+        if tkhd["duration"] < vtkhd["duration"]:
+            report.fail(f"audio {index} duration {tkhd['duration']} is shorter than the video {vtkhd['duration']}")
         stbl = find_stbl(audio)
         offsets.append([sample.offset for sample in samples_of(stbl)])
         sizes.append([sample.size for sample in samples_of(stbl)])
@@ -391,6 +401,10 @@ def layout_checks(path: str, moov: Box, tops: list[TopBox], report: Report) -> N
         report.ok(f"the two audio tracks share {len(offsets[0])} sample offsets and sizes")
     else:
         report.fail("the two audio tracks do not share sample offsets and sizes")
+    if mvhd["duration"] == max(parse_tkhd(audio.child(b"tkhd").payload)["duration"] for audio in audios):
+        report.ok(f"movie duration {mvhd['duration']} follows the audio")
+    else:
+        report.fail(f"movie duration {mvhd['duration']} does not follow the audio")
 
     tags = ilst_tags(moov.child(b"udta")) if moov.child(b"udta") else []
     if tags == [("©too", 1, ENCODER_TAG)]:
@@ -403,6 +417,86 @@ def layout_checks(path: str, moov: Box, tops: list[TopBox], report: Report) -> N
         report.fail("moov still contains the Haze encoder tag")
     else:
         report.ok("moov does not contain the Haze encoder tag")
+
+
+def _silent_groups(samples: list) -> tuple[list, list]:
+    tail = samples[-SILENT_COUNT:]
+    early = tail[: SILENT_COUNT - SDI2_COUNT]
+    late = tail[SILENT_COUNT - SDI2_COUNT :]
+    return early, late
+
+
+def audio_structure(path: str, moov: Box, tops: list[TopBox], report: Report) -> None:
+    """The structure shared by the served Haze and ShoreUploader files."""
+    report.add("")
+    report.add("== audio structure ==")
+    audios = [trak for trak in moov.children_of(b"trak") if handler_kind(trak) == b"soun"]
+    if len(audios) != 2:
+        report.fail(f"need two audio tracks, found {len(audios)}")
+        return
+    configs = sample_entry_configs(audios[0])
+    payloads = entry_esds_payloads(audios[0])
+    if len(configs) == 2 and configs[1] == PCE_ASC and payloads[1] and PADDED_DSI in payloads[1]:
+        report.ok("first audio track has a second mp4a whose AudioSpecificConfig is 11 80 04 c0 40 00 20 00")
+    else:
+        shown = configs[1].hex() if len(configs) > 1 else "missing"
+        report.fail(f"first audio track second config is {shown}")
+    second_count = len(sample_entry_configs(audios[1]))
+    if second_count == 1:
+        report.ok("duplicate audio track has one mp4a sample entry")
+    else:
+        report.fail(f"duplicate audio track has {second_count} sample entries")
+
+    left = samples_of(find_stbl(audios[0]))
+    right = samples_of(find_stbl(audios[1]))
+    if len(left) < SILENT_COUNT or len(right) < SILENT_COUNT:
+        report.fail("audio track is shorter than 17 frames")
+        return
+    early, late = _silent_groups(left)
+    other_early, other_late = _silent_groups(right)
+    frames_ok = True
+    for sample in left[-SILENT_COUNT:]:
+        if sample.size != len(SILENT_FRAME) or read_span(path, sample.offset, sample.size) != SILENT_FRAME:
+            frames_ok = False
+            break
+    if frames_ok and [sample.size for sample in right[-SILENT_COUNT:]] == [len(SILENT_FRAME)] * SILENT_COUNT:
+        report.ok("last 17 audio samples are 21 10 04 60 8c 1c")
+    else:
+        report.fail("last 17 audio samples are not the silent frame")
+    mdats = [box for box in tops if box.typ == b"mdat"]
+    if len(mdats) >= 2:
+        second = mdats[1]
+        inside = all(
+            second.payload_offset <= sample.offset and sample.offset + sample.size <= second.end
+            for sample in left[-SILENT_COUNT:]
+        )
+        if inside:
+            report.ok("those 17 frames sit in the second mdat")
+        else:
+            report.fail("the silent frames are not inside the second mdat")
+    split_ok = (
+        len({sample.chunk for sample in early}) == 1
+        and len({sample.chunk for sample in late}) == 1
+        and early[-1].chunk != late[0].chunk
+        and all(sample.description == 1 for sample in early)
+        and all(sample.description == 2 for sample in late)
+    )
+    if split_ok:
+        report.ok("first audio track: silent chunk of 9 on entry 1, then 8 on entry 2")
+    else:
+        report.fail(
+            "silent chunk split is "
+            f"{[sample.description for sample in early]} / {[sample.description for sample in late]}"
+        )
+    other_ok = all(sample.description == 1 for sample in other_early + other_late)
+    if other_ok and [sample.chunk for sample in right[-SILENT_COUNT:]] == [sample.chunk for sample in left[-SILENT_COUNT:]]:
+        report.ok("duplicate track shares those chunks and keeps every frame on entry 1")
+    else:
+        report.fail("duplicate track does not keep the silent frames on entry 1")
+    if len(left) > SILENT_COUNT and left[-SILENT_COUNT - 1].chunk == early[0].chunk:
+        report.fail("the silent run was merged into the last real audio chunk")
+    else:
+        report.ok("the silent run starts in its own chunk")
 
 
 def sample_identity(input_path: str, output_path: str, out_moov: Box, report: Report) -> None:
@@ -431,12 +525,26 @@ def sample_identity(input_path: str, output_path: str, out_moov: Box, report: Re
 
     in_as = samples_of(find_stbl(in_audio))
     in_ah = hash_samples(input_path, in_as)
+    silent_hash = hashlib.sha256(SILENT_FRAME).hexdigest()
     for index, audio in enumerate(out_audios, start=1):
         samples = samples_of(find_stbl(audio))
         digests = hash_samples(output_path, samples)
-        if digests == in_ah and [s.size for s in samples] == [s.size for s in in_as]:
+        sizes = [sample.size for sample in samples]
+        exact = digests == in_ah and sizes == [sample.size for sample in in_as]
+        extended = (
+            len(digests) == len(in_ah) + SILENT_COUNT
+            and digests[: len(in_ah)] == in_ah
+            and sizes[: len(in_as)] == [sample.size for sample in in_as]
+            and all(item == silent_hash for item in digests[-SILENT_COUNT:])
+        )
+        if exact:
             report.ok(
                 f"audio track {index} samples {len(digests)}/{len(digests)} match input  combined {combined_hash(digests)}"
+            )
+        elif extended:
+            report.ok(
+                f"audio track {index} keeps {len(in_ah)} input samples and adds {SILENT_COUNT} silent frames  "
+                f"combined {combined_hash(digests)}"
             )
         else:
             mismatch = [i for i, (a, b) in enumerate(zip(in_ah, digests), start=1) if a != b]
@@ -540,9 +648,9 @@ def reference_section(output_path: str, reference_path: str, out_moov: Box, out_
     report.add(f"  output ffprobe: {ov.get('codec_name')} {ov.get('profile')} {ov.get('width')}x{ov.get('height')} {ov.get('pix_fmt')} {color_of(ov)} bframes={ov.get('has_b_frames')}")
     report.add(f"  reference ffprobe: {rv.get('codec_name')} {rv.get('profile')} {rv.get('width')}x{rv.get('height')} {rv.get('pix_fmt')} {color_of(rv)} bframes={rv.get('has_b_frames')}")
     report.add("")
-    report.add("== not the same without a different bitstream ==")
-    report.add("  These are differences in the coded samples or in the encoder's own headers.")
-    report.add("  Copying sample bytes cannot close them.")
+    report.add("== bitstream differences, not part of the audio structure ==")
+    report.add("  The served file is the original upload once audio ingest fails.")
+    report.add("  Codec, resolution, color, GOP, and handler text are properties of the source.")
     if out_hist != ref_hist:
         report.add(f"  - NAL mix differs. Reference histogram {dict(sorted(ref_hist.items()))}.")
     if 35 in ref_hist and 35 not in out_hist:
@@ -563,25 +671,32 @@ def reference_section(output_path: str, reference_path: str, out_moov: Box, out_
         report.add(f"  - Video handler name is {out_handler!r} here and {ref_handler!r} in the reference (Mainconcept / Premiere).")
     ref_audios = [trak for trak in ref_traks if handler_kind(trak) == b"soun"]
     if ref_audios:
-        ref_entries = iter_sample_entries(find_stbl(ref_audios[0]).child(b"stsd").payload)
+        ref_configs = sample_entry_configs(ref_audios[0])
         out_audio = next(trak for trak in out_traks if handler_kind(trak) == b"soun")
-        out_entries = iter_sample_entries(find_stbl(out_audio).child(b"stsd").payload)
-        if len(ref_entries) != len(out_entries):
-            report.add(
-                f"  - First audio sample description count is {len(out_entries)} here and {len(ref_entries)} in the reference. The extra mp4a is a second decoder config, not a second copy of the samples."
-            )
-    out_audio_samples = samples_of(find_stbl([t for t in out_traks if handler_kind(t) == b"soun"][0]))
-    ref_audio_samples = samples_of(find_stbl(ref_audios[0]))
-    out_member = samples_in_mdats(output_path, out_tops, out_audio_samples)
-    ref_member = samples_in_mdats(reference_path, ref_tops, ref_audio_samples)
-    report.add(f"  - Output audio samples by mdat index: {dict(out_member)}")
-    report.add(f"  - Reference audio samples by mdat index: {dict(ref_member)}")
-    if ref_member.get(1, 0) and not out_member.get(1, 0):
-        tiny = [sample for sample in ref_audio_samples if sample.size == 6]
+        out_configs = sample_entry_configs(out_audio)
+        same_asc = len(ref_configs) > 1 and len(out_configs) > 1 and ref_configs[1] == out_configs[1] == PCE_ASC
         report.add(
-            f"  - The reference's second mdat is not an unused marker. {ref_member.get(1, 0)} audio samples are stored in it"
-            f" ({len(tiny)} of them are 6-byte {PATTERN[:6].hex()} frames). Pointing new samples at that pattern would add audio the input does not contain, so this tool leaves the box unreferenced unless the input already pointed at it."
+            "  audio config matches the reference"
+            if same_asc
+            else f"  audio config output={ [item.hex() for item in out_configs] } reference={ [item.hex() for item in ref_configs] }"
         )
+    out_audio_samples = samples_of(find_stbl([t for t in out_traks if handler_kind(t) == b"soun"][0]))
+    ref_audio_samples = samples_of(find_stbl(ref_audios[0])) if ref_audios else []
+    out_member = samples_in_mdats(output_path, out_tops, out_audio_samples)
+    ref_member = samples_in_mdats(reference_path, ref_tops, ref_audio_samples) if ref_audios else {}
+    report.add(f"  output audio samples by mdat index: {dict(out_member)}")
+    report.add(f"  reference audio samples by mdat index: {dict(ref_member)}")
+    if ref_audios:
+        ref_tail = ref_audio_samples[-SILENT_COUNT:]
+        out_tail = out_audio_samples[-SILENT_COUNT:]
+        ref_bytes = all(sample.size == 6 and read_span(reference_path, sample.offset, 6) == SILENT_FRAME for sample in ref_tail)
+        out_bytes = all(sample.size == 6 and read_span(output_path, sample.offset, 6) == SILENT_FRAME for sample in out_tail)
+        ref_sdi = [sample.description for sample in ref_tail[-SDI2_COUNT:]]
+        out_sdi = [sample.description for sample in out_tail[-SDI2_COUNT:]]
+        if ref_bytes and out_bytes and ref_sdi == out_sdi == [2] * SDI2_COUNT:
+            report.add("  silent tail matches the reference: 17 frames, last 8 on sample entry 2")
+        else:
+            report.add(f"  silent tail output sdi={out_sdi} reference sdi={ref_sdi}")
 
 
 def track_rows(out_path: str, ref_path: str, left: Box, right: Box, out_tops: list[TopBox], ref_tops: list[TopBox]) -> list[tuple[str, object, object, str]]:
@@ -698,6 +813,7 @@ def run(input_path: str, output_path: str, reference_path: str | None) -> Report
     sample_identity(input_path, output_path, out_moov, report)
     report.add("")
     layout_checks(output_path, out_moov, out_tops, report)
+    audio_structure(output_path, out_moov, out_tops, report)
     color_guard(input_path, output_path, report)
     if reference_path:
         reference_section(output_path, reference_path, out_moov, out_tops, report)

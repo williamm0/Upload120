@@ -1,7 +1,7 @@
 verdict: PASS
 
 input:     /tmp/haze-ref/haze.mp4
-output:    /tmp/haze-dev/haze-retag.mp4
+output:    /tmp/haze-dev/reference-retag.mp4
 reference: /tmp/haze-ref/haze.mp4
 
 == what the container change did (input -> output) ==
@@ -178,22 +178,31 @@ ok    output audio tracks point at the same file offsets
 ok    top-level order is ftyp, mdat, mdat, moov
 ok    ftyp mp42 minor 0, compatible mp42, mp41
 ok    second mdat is 21 10 04 60 8c 1c repeated 17 times
-ok    mvhd time fields are zero and timescale is 1000
+ok    mvhd time fields are zero (timescale 1000 left as the source wrote it)
 ok    one video track and two audio tracks
 ok    next_track_id is 4
-ok    video tkhd flags=7, times zero, alternate_group 0
-ok    video mdhd timescale 60000, times zero
-ok    video elst media_time 0, rate 1
-ok    video sdtp 1971 bytes, 0x24 x 66, 0x10 x 1905
-ok    audio 1 tkhd flags=1, times zero, alternate_group 0
-ok    audio 1 mdhd timescale 48000, times zero
-ok    audio 1 elst media_time 0, rate 1
-ok    audio 2 tkhd flags=1, times zero, alternate_group 0
-ok    audio 2 mdhd timescale 48000, times zero
-ok    audio 2 elst media_time 0, rate 1
+ok    video tkhd flags=7, times zero (alternate_group 0 left as the source wrote it)
+ok    video mdhd times zero (timescale 60000 left as the source wrote it)
+  video sdtp (kept from the source, not required): 1971 bytes, 0x24 x 66, 0x10 x 1905
+ok    audio 1 tkhd flags=1, times zero (alternate_group 0)
+ok    audio 1 mdhd timescale 48000, times zero, duration 1595392
+  audio 1 elst segment=33237 media_time=0 rate=65536
+ok    audio 2 tkhd flags=1, times zero (alternate_group 0)
+ok    audio 2 mdhd timescale 48000, times zero, duration 1595392
+  audio 2 elst segment=33237 media_time=0 rate=65536
 ok    the two audio tracks share 1558 sample offsets and sizes
+ok    movie duration 33237 follows the audio
 ok    only udta tag is ©too = Upload120 Studio Method https://upload120.com
 ok    moov does not contain the Haze encoder tag
+
+== audio structure ==
+ok    first audio track has a second mp4a whose AudioSpecificConfig is 11 80 04 c0 40 00 20 00
+ok    duplicate audio track has one mp4a sample entry
+ok    last 17 audio samples are 21 10 04 60 8c 1c
+ok    those 17 frames sit in the second mdat
+ok    first audio track: silent chunk of 9 on entry 1, then 8 on entry 2
+ok    duplicate track shares those chunks and keeps every frame on entry 1
+ok    the silent run starts in its own chunk
 
 == color guard ==
   input    bt2020/smpte2084/bt2020nc/tv yuv420p10le Main 10
@@ -464,8 +473,10 @@ reference moov tree:
   output ffprobe: hevc Main 10 2160x3840 yuv420p10le bt2020/smpte2084/bt2020nc/tv bframes=0
   reference ffprobe: hevc Main 10 2160x3840 yuv420p10le bt2020/smpte2084/bt2020nc/tv bframes=0
 
-== not the same without a different bitstream ==
-  These are differences in the coded samples or in the encoder's own headers.
-  Copying sample bytes cannot close them.
-  - Output audio samples by mdat index: {0: 1541, 1: 17}
-  - Reference audio samples by mdat index: {0: 1541, 1: 17}
+== bitstream differences, not part of the audio structure ==
+  The served file is the original upload once audio ingest fails.
+  Codec, resolution, color, GOP, and handler text are properties of the source.
+  audio config matches the reference
+  output audio samples by mdat index: {0: 1541, 1: 17}
+  reference audio samples by mdat index: {0: 1541, 1: 17}
+  silent tail matches the reference: 17 frames, last 8 on sample entry 2

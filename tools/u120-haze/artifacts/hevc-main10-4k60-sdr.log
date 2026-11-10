@@ -1,0 +1,10 @@
+source container can be rebuilt directly
+scaled video timescale 15360 -> 60000
+cleared the visual sample-entry compressor name
+removed SEI arrays from hvcC; sample payloads were not edited
+added sdtp (0x24 on sync samples, 0x10 on the others)
+duplicated the AAC track so two tracks share the same samples
+encoder tag: Upload120 Studio Method https://upload120.com
+wrote the 102-byte mdat before moov
+sample identity ok: 120 video, 95 audio x2, sha256 b755738398803fae
+wrote /agent/repos/Upload120/tools/u120-haze/artifacts/hevc-main10-4k60-sdr.out.mp4 (6303498 bytes)

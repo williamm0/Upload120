@@ -1,0 +1,10 @@
+source container can be rebuilt directly
+scaled video timescale 15360 -> 60000
+set video edit media_time to 0 and subtracted 2000 from composition offsets
+cleared the visual sample-entry compressor name
+added sdtp (0x24 on sync samples, 0x10 on the others)
+duplicated the AAC track so two tracks share the same samples
+encoder tag: Upload120 Studio Method https://upload120.com
+wrote the 102-byte mdat before moov
+sample identity ok: 120 video, 95 audio x2, sha256 037c0f6d68b3d0b7
+wrote /agent/repos/Upload120/tools/u120-haze/artifacts/avc-1080p60-sdr.out.mp4 (1914840 bytes)

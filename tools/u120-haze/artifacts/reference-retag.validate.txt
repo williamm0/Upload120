@@ -1,0 +1,471 @@
+verdict: PASS
+
+input:     /tmp/haze-ref/haze.mp4
+output:    /tmp/haze-dev/haze-retag.mp4
+reference: /tmp/haze-ref/haze.mp4
+
+== what the container change did (input -> output) ==
+input top level:
+  ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
+  mdat off=24 size=192503019 payload=192503011
+  mdat off=192503043 size=110 payload=102 pattern-match
+  moov off=192503153 size=28914
+output top level:
+  ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
+  mdat off=24 size=192503019 payload=192503011
+  mdat off=192503043 size=110 payload=102 pattern-match
+  moov off=192503153 size=28917
+input moov atoms:
+  moov 28914
+    mvhd 108
+    trak 11630
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 11494
+        mdhd 32
+        hdlr 64
+        minf 11390
+          vmhd 20
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 11275
+            stsd 228
+              hvc1 212
+                hvcC 126
+            stts 24
+            stsc 40
+            stsz 7904
+            stco 808
+            stss 280
+            sdtp 1983
+    trak 8567
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8431
+        mdhd 32
+        hdlr 68
+        minf 8323
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8212
+            stsd 184
+              mp4a 75
+                esds 39
+              mp4a 93
+                esds 57
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    trak 8474
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8338
+        mdhd 32
+        hdlr 68
+        minf 8230
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8119
+            stsd 91
+              mp4a 75
+                esds 39
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    udta 127
+      meta 119
+        hdlr 33
+        ilst 74
+          ©too 66
+            data 58
+output moov atoms:
+  moov 28917
+    mvhd 108
+    trak 11630
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 11494
+        mdhd 32
+        hdlr 64
+        minf 11390
+          vmhd 20
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 11275
+            stsd 228
+              hvc1 212
+                hvcC 126
+            stts 24
+            stsc 40
+            stsz 7904
+            stco 808
+            stss 280
+            sdtp 1983
+    trak 8567
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8431
+        mdhd 32
+        hdlr 68
+        minf 8323
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8212
+            stsd 184
+              mp4a 75
+                esds 39
+              mp4a 93
+                esds 57
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    trak 8474
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8338
+        mdhd 32
+        hdlr 68
+        minf 8230
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8119
+            stsd 91
+              mp4a 75
+                esds 39
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    udta 130
+      meta 122
+        hdlr 33
+        ilst 77
+          ©too 69
+            data 61
+input udta: [('©too', 1, 'Haze Quality Method https://hazemethod.xyz')]
+output udta: [('©too', 1, 'Upload120 Studio Method https://upload120.com')]
+atoms removed from the input moov:
+  (none)
+atoms added:
+  (none)
+
+== sample identity vs input ==
+ok    video samples 1971/1971 match  combined bb7d6280a90bf440ec4a421060d8455ccce28fc2b28dc4b1bc8a285ce0ece262
+ok    audio track 1 samples 1558/1558 match input  combined b76758c7e7916507fb15d73965ac1c3871c021bf11aef61f9daa15a5badf0aff
+ok    audio track 2 samples 1558/1558 match input  combined b76758c7e7916507fb15d73965ac1c3871c021bf11aef61f9daa15a5badf0aff
+ok    output audio tracks point at the same file offsets
+
+== layout checks ==
+ok    top-level order is ftyp, mdat, mdat, moov
+ok    ftyp mp42 minor 0, compatible mp42, mp41
+ok    second mdat is 21 10 04 60 8c 1c repeated 17 times
+ok    mvhd time fields are zero and timescale is 1000
+ok    one video track and two audio tracks
+ok    next_track_id is 4
+ok    video tkhd flags=7, times zero, alternate_group 0
+ok    video mdhd timescale 60000, times zero
+ok    video elst media_time 0, rate 1
+ok    video sdtp 1971 bytes, 0x24 x 66, 0x10 x 1905
+ok    audio 1 tkhd flags=1, times zero, alternate_group 0
+ok    audio 1 mdhd timescale 48000, times zero
+ok    audio 1 elst media_time 0, rate 1
+ok    audio 2 tkhd flags=1, times zero, alternate_group 0
+ok    audio 2 mdhd timescale 48000, times zero
+ok    audio 2 elst media_time 0, rate 1
+ok    the two audio tracks share 1558 sample offsets and sizes
+ok    only udta tag is ©too = Upload120 Studio Method https://upload120.com
+ok    moov does not contain the Haze encoder tag
+
+== color guard ==
+  input    bt2020/smpte2084/bt2020nc/tv yuv420p10le Main 10
+  output   bt2020/smpte2084/bt2020nc/tv yuv420p10le Main 10
+ok    output did not gain HDR color signaling
+
+== atom-by-atom diff vs Haze reference ==
+output:
+  ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
+  mdat off=24 size=192503019 payload=192503011
+  mdat off=192503043 size=110 payload=102 pattern-match
+  moov off=192503153 size=28917
+reference:
+  ftyp off=0 size=24 major=mp42 minor=0 brands=mp42,mp41
+  mdat off=24 size=192503019 payload=192503011
+  mdat off=192503043 size=110 payload=102 pattern-match
+  moov off=192503153 size=28914
+atoms only in the output:
+  (none)
+atoms only in the reference:
+  (none)
+shared atom paths: 72
+output udta: [('©too', 1, 'Upload120 Studio Method https://upload120.com')]
+reference udta: [('©too', 1, 'Haze Quality Method https://hazemethod.xyz')]
+the tag text is replaced on purpose; the reference string is not written
+
+output moov tree:
+  moov 28917
+    mvhd 108
+    trak 11630
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 11494
+        mdhd 32
+        hdlr 64
+        minf 11390
+          vmhd 20
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 11275
+            stsd 228
+              hvc1 212
+                hvcC 126
+            stts 24
+            stsc 40
+            stsz 7904
+            stco 808
+            stss 280
+            sdtp 1983
+    trak 8567
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8431
+        mdhd 32
+        hdlr 68
+        minf 8323
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8212
+            stsd 184
+              mp4a 75
+                esds 39
+              mp4a 93
+                esds 57
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    trak 8474
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8338
+        mdhd 32
+        hdlr 68
+        minf 8230
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8119
+            stsd 91
+              mp4a 75
+                esds 39
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    udta 130
+      meta 122
+        hdlr 33
+        ilst 77
+          ©too 69
+            data 61
+reference moov tree:
+  moov 28914
+    mvhd 108
+    trak 11630
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 11494
+        mdhd 32
+        hdlr 64
+        minf 11390
+          vmhd 20
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 11275
+            stsd 228
+              hvc1 212
+                hvcC 126
+            stts 24
+            stsc 40
+            stsz 7904
+            stco 808
+            stss 280
+            sdtp 1983
+    trak 8567
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8431
+        mdhd 32
+        hdlr 68
+        minf 8323
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8212
+            stsd 184
+              mp4a 75
+                esds 39
+              mp4a 93
+                esds 57
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    trak 8474
+      tkhd 92
+      edts 36
+        elst 28
+      mdia 8338
+        mdhd 32
+        hdlr 68
+        minf 8230
+          smhd 16
+          hdlr 51
+          dinf 36
+            dref 28
+          stbl 8119
+            stsd 91
+              mp4a 75
+                esds 39
+            stts 24
+            stsc 928
+            stsz 6252
+            stco 816
+    udta 127
+      meta 119
+        hdlr 33
+        ilst 74
+          ©too 66
+            data 58
+
+== track-by-track diff vs Haze reference ==
+-- track slot 1 --
+  field                        output                   reference                note
+  handler                      vide                     vide                     MATCH
+  tkhd.flags                   7                        7                        MATCH
+  tkhd.creation                0                        0                        MATCH
+  tkhd.modification            0                        0                        MATCH
+  tkhd.alternate_group         0                        0                        MATCH
+  tkhd.volume                  0                        0                        MATCH
+  tkhd.matrix                  65536,0,0,0,65536,0,0,0,1073741824 65536,0,0,0,65536,0,0,0,1073741824 MATCH
+  tkhd.duration                32850                    32850                    MATCH
+  tkhd.width                   2160.0                   2160.0                   MATCH
+  tkhd.height                  3840.0                   3840.0                   MATCH
+  mdhd.creation                0                        0                        MATCH
+  mdhd.modification            0                        0                        MATCH
+  mdhd.timescale               60000                    60000                    MATCH
+  mdhd.language                eng                      eng                      MATCH
+  mdhd.duration                1971000                  1971000                  MATCH
+  elst.count                   1                        1                        MATCH
+  elst.media_time              0                        0                        MATCH
+  elst.rate                    0x10000                  0x10000                  MATCH
+  elst.segment                 32850                    32850                    MATCH
+  hdlr.name                    \x1fMainconcept Video Media Handler \x1fMainconcept Video Media Handler MATCH
+  stsd.entries                 hvc1                     hvc1                     MATCH
+  compressor                                                                     MATCH
+  hvcC                         profile=2 tier=high level=153 chroma=1 bitdepth=10 arrays=3 bytes=118 profile=2 tier=high level=153 chroma=1 bitdepth=10 arrays=3 bytes=118 MATCH
+  stts                         1 rows first=[(1971, 1000)] 1 rows first=[(1971, 1000)] MATCH
+  ctts                         no                       no                       MATCH
+  sdtp                         yes                      yes                      MATCH
+  samples                      1971                     1971                     MATCH
+  samples.in_mdat              {0: 1971}                {0: 1971}                MATCH
+  stsc.last_sdi                1                        1                        MATCH
+-- track slot 2 --
+  field                        output                   reference                note
+  handler                      soun                     soun                     MATCH
+  tkhd.flags                   1                        1                        MATCH
+  tkhd.creation                0                        0                        MATCH
+  tkhd.modification            0                        0                        MATCH
+  tkhd.alternate_group         0                        0                        MATCH
+  tkhd.volume                  256                      256                      MATCH
+  tkhd.matrix                  65536,0,0,0,65536,0,0,0,1073741824 65536,0,0,0,65536,0,0,0,1073741824 MATCH
+  tkhd.duration                33237                    33237                    MATCH
+  tkhd.width                   0.0                      0.0                      MATCH
+  tkhd.height                  0.0                      0.0                      MATCH
+  mdhd.creation                0                        0                        MATCH
+  mdhd.modification            0                        0                        MATCH
+  mdhd.timescale               48000                    48000                    MATCH
+  mdhd.language                eng                      eng                      MATCH
+  mdhd.duration                1595392                  1595392                  MATCH
+  elst.count                   1                        1                        MATCH
+  elst.media_time              0                        0                        MATCH
+  elst.rate                    0x10000                  0x10000                  MATCH
+  elst.segment                 33237                    33237                    MATCH
+  hdlr.name                    #Mainconcept MP4 Sound Media Handler #Mainconcept MP4 Sound Media Handler MATCH
+  stsd.entries                 mp4a mp4a                mp4a mp4a                MATCH
+  stts                         1 rows first=[(1558, 1024)] 1 rows first=[(1558, 1024)] MATCH
+  ctts                         no                       no                       MATCH
+  sdtp                         no                       no                       MATCH
+  samples                      1558                     1558                     MATCH
+  samples.in_mdat              {0: 1541, 1: 17}         {0: 1541, 1: 17}         MATCH
+  stsc.last_sdi                2                        2                        MATCH
+-- track slot 3 --
+  field                        output                   reference                note
+  handler                      soun                     soun                     MATCH
+  tkhd.flags                   1                        1                        MATCH
+  tkhd.creation                0                        0                        MATCH
+  tkhd.modification            0                        0                        MATCH
+  tkhd.alternate_group         0                        0                        MATCH
+  tkhd.volume                  256                      256                      MATCH
+  tkhd.matrix                  65536,0,0,0,65536,0,0,0,1073741824 65536,0,0,0,65536,0,0,0,1073741824 MATCH
+  tkhd.duration                33237                    33237                    MATCH
+  tkhd.width                   0.0                      0.0                      MATCH
+  tkhd.height                  0.0                      0.0                      MATCH
+  mdhd.creation                0                        0                        MATCH
+  mdhd.modification            0                        0                        MATCH
+  mdhd.timescale               48000                    48000                    MATCH
+  mdhd.language                eng                      eng                      MATCH
+  mdhd.duration                1595392                  1595392                  MATCH
+  elst.count                   1                        1                        MATCH
+  elst.media_time              0                        0                        MATCH
+  elst.rate                    0x10000                  0x10000                  MATCH
+  elst.segment                 33237                    33237                    MATCH
+  hdlr.name                    #Mainconcept MP4 Sound Media Handler #Mainconcept MP4 Sound Media Handler MATCH
+  stsd.entries                 mp4a                     mp4a                     MATCH
+  stts                         1 rows first=[(1558, 1024)] 1 rows first=[(1558, 1024)] MATCH
+  ctts                         no                       no                       MATCH
+  sdtp                         no                       no                       MATCH
+  samples                      1558                     1558                     MATCH
+  samples.in_mdat              {0: 1541, 1: 17}         {0: 1541, 1: 17}         MATCH
+  stsc.last_sdi                1                        1                        MATCH
+
+== bitstream diff vs Haze reference ==
+  output NAL types: [(1, 1905), (19, 66), (32, 66), (33, 66), (34, 66), (35, 1971)]
+  reference NAL types: [(1, 1905), (19, 66), (32, 66), (33, 66), (34, 66), (35, 1971)]
+  output ffprobe: hevc Main 10 2160x3840 yuv420p10le bt2020/smpte2084/bt2020nc/tv bframes=0
+  reference ffprobe: hevc Main 10 2160x3840 yuv420p10le bt2020/smpte2084/bt2020nc/tv bframes=0
+
+== not the same without a different bitstream ==
+  These are differences in the coded samples or in the encoder's own headers.
+  Copying sample bytes cannot close them.
+  - Output audio samples by mdat index: {0: 1541, 1: 17}
+  - Reference audio samples by mdat index: {0: 1541, 1: 17}
